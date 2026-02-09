@@ -6,7 +6,8 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Query
-
+import retrofit2.http.PATCH
+import retrofit2.http.Path
 interface ApiService {
 
     @GET("api/protected")
@@ -38,5 +39,13 @@ interface ApiService {
     suspend fun getMyEvents(
         @Header("Authorization") token: String
     ): Response<List<EventResponse>>
+
+    @PATCH("api/events/{eventId}/complete")
+    suspend fun completeEvent(
+        @Header("Authorization") token: String,
+        @Path("eventId") eventId: Int,
+        @Body request: CompleteEventRequest
+    ): Response<Map<String, Any>>
+
 
 }

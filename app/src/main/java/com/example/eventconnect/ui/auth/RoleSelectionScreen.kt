@@ -9,30 +9,46 @@ import androidx.navigation.NavController
 import com.example.eventconnect.data.network.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun RoleSelectionScreen(
     navController: NavController
 ) {
     val scope = rememberCoroutineScope()
+    var error by remember { mutableStateOf<String?>(null) }
 
     fun selectRole(role: String, route: String) {
         getFirebaseIdToken(
             onTokenReceived = { token ->
                 scope.launch(Dispatchers.IO) {
-                    val response = RetrofitClient.apiService.selectRole(
-                        role = role,
-                        token = "Bearer $token"
-                    )
+                    try {
+                        val response = RetrofitClient.apiService.selectRole(
+                            role = role,
+                            token = "Bearer $token"
+                        )
 
-                    if (response.isSuccessful) {
-                        navController.navigate(route) {
-                            popUpTo("role-selection") { inclusive = true }
+                        if (response.isSuccessful) {
+                            withContext(Dispatchers.Main) {
+                                navController.navigate(route) {
+                                    popUpTo("role-selection") { inclusive = true }
+                                }
+                            }
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                error = "Failed: ${response.code()}"
+                            }
+                        }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            error = e.message
                         }
                     }
                 }
             },
-            onError = {}
+            onError = {
+                error = it
+            }
         )
     }
 
@@ -69,6 +85,11 @@ fun RoleSelectionScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("NGO")
+        }
+
+        error?.let {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(it, color = MaterialTheme.colorScheme.error)
         }
     }
 }

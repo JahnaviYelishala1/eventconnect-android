@@ -23,6 +23,9 @@ fun MyEventsScreen(
     val events by viewModel.events.collectAsState()
     val error by viewModel.error.collectAsState()
 
+    var showCompleteSheet by remember { mutableStateOf(false) }
+    var selectedEventId by remember { mutableStateOf<Int?>(null) }
+
     LaunchedEffect(Unit) {
         viewModel.loadEvents()
     }
@@ -72,22 +75,48 @@ fun MyEventsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(events) { event ->
-                        EventCard(event)
+                        EventCard(
+                            event = event,
+                            onCompleteClick = {
+                                // ✅ Only allow completion for CREATED events
+                                if (event.status == "CREATED") {
+                                    selectedEventId = event.id
+                                    showCompleteSheet = true
+                                }
+                            }
+                        )
                     }
                 }
             }
         }
     }
+
+    // ✅ Bottom Sheet
+    if (showCompleteSheet && selectedEventId != null) {
+        CompleteEventBottomSheet(
+            onDismiss = { showCompleteSheet = false },
+            onSubmit = { prepared, consumed, location ->
+                viewModel.completeEvent(
+                    eventId = selectedEventId!!,
+                    foodPrepared = prepared,
+                    foodConsumed = consumed,
+                    surplusLocation = location
+                )
+                showCompleteSheet = false
+            }
+        )
+    }
 }
 
 /* -----------------------------------------------------
-   🔹 BEAUTIFUL EVENT CARD (FINAL)
+   🔹 EVENT CARD (FINAL)
 ----------------------------------------------------- */
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventCard(event: EventResponse) {
-
+fun EventCard(
+    event: EventResponse,
+    onCompleteClick: () -> Unit
+) {
     val foodQty = "%.1f".format(event.estimated_food_quantity)
 
     Card(
@@ -98,33 +127,35 @@ fun EventCard(event: EventResponse) {
         )
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            // ---------- TITLE ----------
-            Text(
-                text = event.event_name,
-                style = MaterialTheme.typography.titleLarge
+            Text(event.event_name, style = MaterialTheme.typography.titleLarge)
+
+            // ✅ STATUS CHIP
+            AssistChip(
+                onClick = {},
+                label = { Text(event.status.replace("_", " ")) },
+                colors = AssistChipDefaults.assistChipColors(
+                    containerColor = when (event.status) {
+                        "SURPLUS_AVAILABLE" ->
+                            MaterialTheme.colorScheme.errorContainer
+                        "COMPLETED" ->
+                            MaterialTheme.colorScheme.primaryContainer
+                        else ->
+                            MaterialTheme.colorScheme.surfaceVariant
+                    }
+                )
             )
 
-            // ---------- TAGS ----------
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AssistChip(
-                    onClick = {},
-                    label = { Text(event.event_type) }
-                )
-                AssistChip(
-                    onClick = {},
-                    label = { Text(event.location_type) }
-                )
+                AssistChip(onClick = {}, label = { Text(event.event_type) })
+                AssistChip(onClick = {}, label = { Text(event.location_type) })
             }
 
             Divider()
 
-            // ---------- DETAILS ROW ----------
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -134,57 +165,76 @@ fun EventCard(event: EventResponse) {
                 InfoColumn("Meal", event.meal_style)
             }
 
-            // ---------- FOOD HIGHLIGHT ----------
             Surface(
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.primaryContainer
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shape = MaterialTheme.shapes.large
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 14.dp, horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-
+                    Text("Estimated Food")
                     Text(
-                        text = "Estimated Food",
-                        style = MaterialTheme.typography.labelLarge
+                        "$foodQty ${event.unit}",
+                        style = MaterialTheme.typography.headlineSmall
                     )
+                }
+            }
 
-                    Text(
-                        text = "$foodQty ${event.unit}",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
+            // ✅ BUTTON CHANGES BASED ON STATUS
+            when (event.status) {
+
+                "CREATED" -> {
+                    Button(
+                        onClick = onCompleteClick,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Complete Event")
+                    }
+                }
+
+                "SURPLUS_AVAILABLE" -> {
+                    Button(
+                        onClick = {},
+                        enabled = false,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            disabledContainerColor =
+                                MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Text("Surplus Available")
+                    }
+                }
+
+                "COMPLETED" -> {
+                    Button(
+                        onClick = {},
+                        enabled = false,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            disabledContainerColor =
+                                MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Text("Completed")
+                    }
                 }
             }
         }
     }
 }
 
-
 /* -----------------------------------------------------
-   🔹 SMALL REUSABLE DETAIL ITEM
+   🔹 INFO COLUMN
 ----------------------------------------------------- */
-
-@Composable
-private fun DetailItem(label: String, value: String) {
-    Column {
-        Text(label, style = MaterialTheme.typography.labelMedium)
-        Text(value, style = MaterialTheme.typography.titleMedium)
-    }
-}
 
 @Composable
 private fun InfoColumn(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium
-        )
+        Text(label, style = MaterialTheme.typography.labelSmall)
+        Text(value, style = MaterialTheme.typography.titleMedium)
     }
 }
