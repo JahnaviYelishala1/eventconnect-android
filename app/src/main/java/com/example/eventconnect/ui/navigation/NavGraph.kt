@@ -13,6 +13,11 @@ import com.example.eventconnect.ui.home.CatererHomeScreen
 import com.example.eventconnect.ui.home.CreateEventScreen
 import com.example.eventconnect.ui.home.MyEventsScreen
 import com.example.eventconnect.ui.home.NgoHomeScreen
+import com.example.eventconnect.ui.admin.AdminNgoReviewScreen
+import com.example.eventconnect.ui.ngo.NgoRegistrationScreen
+import com.example.eventconnect.ui.ngo.NgoDocumentUploadScreen
+import com.example.eventconnect.ui.ngo.NgoDocumentsScreen
+
 
 @Composable
 fun NavGraph() {
@@ -81,6 +86,21 @@ fun NavGraph() {
             MyEventsScreen(navController)
         }
 
+        composable("admin-ngo-review") {
+            AdminNgoReviewScreen(navController)
+        }
+
+        composable("ngo-register") {
+            NgoRegistrationScreen(navController)
+        }
+
+        composable("ngo-documents") {
+            NgoDocumentUploadScreen(navController)
+        }
+
+        composable("ngo-documents-list") {
+            NgoDocumentsScreen(navController)
+        }
 
     }
 }

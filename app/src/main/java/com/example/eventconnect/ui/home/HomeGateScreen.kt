@@ -7,35 +7,56 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import com.example.eventconnect.data.network.RetrofitClient
-import com.example.eventconnect.ui.auth.getFirebaseIdToken
+import com.example.eventconnect.data.network.NgoMeResponse
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @Composable
 fun HomeGateScreen(navController: NavController) {
 
     val scope = rememberCoroutineScope()
-    var status by remember { mutableStateOf("Checking user role...") }
+    var status by remember { mutableStateOf("Checking session...") }
+    var checked by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        getFirebaseIdToken(
-            onTokenReceived = { token ->
+
+        if (checked) return@LaunchedEffect
+        checked = true
+
+        val firebaseUser = FirebaseAuth.getInstance().currentUser
+        if (firebaseUser == null) {
+            navController.navigate("login") {
+                popUpTo("home-gate") { inclusive = true }
+            }
+            return@LaunchedEffect
+        }
+
+        firebaseUser.getIdToken(true)
+            .addOnSuccessListener { result ->
+                val token = result.token ?: return@addOnSuccessListener
+
                 scope.launch {
                     try {
-                        val response = RetrofitClient.apiService.protectedCall(
-                            token = "Bearer $token"
-                        )
+                        val response =
+                            RetrofitClient.apiService.protectedCall("Bearer $token")
 
-                        if (!response.isSuccessful) {
-                            status = "Auth failed: \${response.code()} \${response.errorBody()?.string()}"
+                        if (!response.isSuccessful || response.body() == null) {
+                            status = "Authentication failed"
                             return@launch
                         }
 
-                        val body = response.body()
-                        val role = body?.get("role")?.toString()
+                        val user = response.body()!!
+                        val role = user.role
 
                         when (role) {
-                            null, "UNASSIGNED" -> {
-                                navController.navigate("role-selection") {
+                            "null"-> {
+                                println("🔥 ROLE FROM BACKEND = $role")
+                            }
+
+
+
+                                "admin" -> {
+                                navController.navigate("admin-ngo-review") {
                                     popUpTo("home-gate") { inclusive = true }
                                 }
                             }
@@ -53,27 +74,42 @@ fun HomeGateScreen(navController: NavController) {
                             }
 
                             "ngo" -> {
-                                navController.navigate("ngo-home") {
-                                    popUpTo("home-gate") { inclusive = true }
+                                val ngoRes =
+                                    RetrofitClient.apiService.getMyNgo("Bearer $token")
+
+                                if (!ngoRes.isSuccessful || ngoRes.body() == null) {
+                                    navController.navigate("ngo-register") {
+                                        popUpTo("home-gate") { inclusive = true }
+                                    }
+                                    return@launch
+                                }
+
+                                val ngo: NgoMeResponse = ngoRes.body()!!
+
+                                when {
+                                    !ngo.exists -> navController.navigate("ngo-register")
+                                    !ngo.documents_uploaded -> navController.navigate("ngo-documents")
+                                    else -> navController.navigate("ngo-home")
                                 }
                             }
 
                             else -> {
-                                status = "Unknown role: $role"
+                                navController.navigate("role-selection") {
+                                    popUpTo("home-gate") { inclusive = true }
+                                }
                             }
                         }
+
                     } catch (e: Exception) {
-                        status = "Error: ${e.message}"
+                        status = "Network error"
                     }
                 }
-            },
-            onError = { error ->
-                status = error
             }
-        )
+            .addOnFailureListener {
+                status = "Token error"
+            }
     }
 
-    // 👇 THIS PREVENTS WHITE SCREEN
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center

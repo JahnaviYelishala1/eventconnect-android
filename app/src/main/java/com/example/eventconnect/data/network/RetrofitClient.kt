@@ -14,7 +14,6 @@ object RetrofitClient {
     private const val BASE_URL =
         "https://casemated-supercongested-loan.ngrok-free.dev/"
 
-
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
     }

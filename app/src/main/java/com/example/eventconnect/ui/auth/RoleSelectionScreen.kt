@@ -21,6 +21,15 @@ fun RoleSelectionScreen(
     fun selectRole(role: String, route: String) {
         getFirebaseIdToken(
             onTokenReceived = { token ->
+
+                // 🔥 DEBUG (remove later)
+                println("🔥 Firebase Token: $token")
+
+                if (token.isBlank()) {
+                    error = "Empty auth token"
+                    return@getFirebaseIdToken
+                }
+
                 scope.launch(Dispatchers.IO) {
                     try {
                         val response = RetrofitClient.apiService.selectRole(
@@ -65,27 +74,21 @@ fun RoleSelectionScreen(
         Button(
             onClick = { selectRole("event_organizer", "organizer-home") },
             modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Event Organizer")
-        }
+        ) { Text("Event Organizer") }
 
         Spacer(modifier = Modifier.height(12.dp))
 
         Button(
             onClick = { selectRole("caterer", "caterer-home") },
             modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Caterer")
-        }
+        ) { Text("Caterer") }
 
         Spacer(modifier = Modifier.height(12.dp))
 
         Button(
             onClick = { selectRole("ngo", "ngo-home") },
             modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("NGO")
-        }
+        ) { Text("NGO") }
 
         error?.let {
             Spacer(modifier = Modifier.height(12.dp))

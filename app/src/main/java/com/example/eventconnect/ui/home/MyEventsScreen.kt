@@ -26,9 +26,6 @@ fun MyEventsScreen(
     var showCompleteSheet by remember { mutableStateOf(false) }
     var selectedEventId by remember { mutableStateOf<Int?>(null) }
 
-    LaunchedEffect(Unit) {
-        viewModel.loadEvents()
-    }
 
     Scaffold(
         topBar = {

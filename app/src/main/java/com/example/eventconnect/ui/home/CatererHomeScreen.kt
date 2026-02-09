@@ -27,7 +27,7 @@ fun CatererHomeScreen(navController: NavController) {
 
                 NavigationBarItem(
                     selected = true,
-                    onClick = { },
+                    onClick = {},
                     icon = {
                         Icon(
                             Icons.Default.Restaurant,
@@ -39,9 +39,7 @@ fun CatererHomeScreen(navController: NavController) {
 
                 NavigationBarItem(
                     selected = false,
-                    onClick = {
-                        // later: navigate to add food screen
-                    },
+                    onClick = {},
                     icon = {
                         Icon(
                             Icons.Default.Add,
