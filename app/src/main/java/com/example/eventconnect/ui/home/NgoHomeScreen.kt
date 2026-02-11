@@ -112,19 +112,23 @@ fun NgoHomeScreen(navController: NavController) {
             NavigationBar {
                 NavigationBarItem(
                     selected = true,
-                    onClick = {},
+                    onClick = { },
                     icon = { Icon(Icons.Default.List, null) },
                     label = { Text("Status") }
                 )
+
                 NavigationBarItem(
                     selected = false,
                     enabled = status == "VERIFIED",
-                    onClick = {},
+                    onClick = {
+                        navController.navigate("ngo-profile")
+                    },
                     icon = { Icon(Icons.Default.Check, null) },
-                    label = { Text("Available") }
+                    label = { Text("Profile") }
                 )
             }
         }
+
     ) { padding ->
         Box(
             modifier = Modifier
