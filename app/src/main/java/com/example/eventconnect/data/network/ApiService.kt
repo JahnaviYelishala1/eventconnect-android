@@ -146,8 +146,15 @@ interface ApiService {
     @GET("api/caterers/match/{eventId}")
     suspend fun getMatchingCaterers(
         @Header("Authorization") token: String,
-        @Path("eventId") eventId: Int
+        @Path("eventId") eventId: Int,
+        @Query("min_price") minPrice: Double?,
+        @Query("max_price") maxPrice: Double?,
+        @Query("min_rating") minRating: Double?,
+        @Query("veg_only") vegOnly: Boolean?,
+        @Query("nonveg_only") nonVegOnly: Boolean?,
+        @Query("sort_by") sortBy: String?
     ): Response<List<CatererResponse>>
+
 
     @POST("api/caterers/book/{eventId}/{catererId}")
     suspend fun bookCaterer(
@@ -174,6 +181,12 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("eventId") eventId: Int
     ): Response<EventBookingStatusResponse>
+
+    @POST("api/caterers/profile")
+    suspend fun createCatererProfile(
+        @Header("Authorization") token: String,
+        @Body request: CatererProfileRequest
+    ): Response<Map<String, String>>
 
 
 

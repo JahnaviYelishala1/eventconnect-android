@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Restaurant
@@ -52,6 +53,18 @@ fun CatererHomeScreen(navController: NavController) {
                         )
                     },
                     label = { Text("Bookings") }
+                )
+
+                NavigationBarItem(
+                    selected = selectedIndex == 2,
+                    onClick = {
+                        selectedIndex = 2
+                        navController.navigate("caterer-profile")
+                    },
+                    icon = {
+                        Icon(Icons.Default.AccountCircle, null)
+                    },
+                    label = { Text("Profile") }
                 )
 
                 // ---------------- LOGOUT ----------------

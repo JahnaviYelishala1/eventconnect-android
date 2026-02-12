@@ -62,7 +62,12 @@ fun OrganizerHomeScreen(navController: NavController) {
                     onClick = {
                         FirebaseAuth.getInstance().signOut()
                         navController.navigate("login") {
-                            popUpTo(0) { inclusive = true }
+                            // Clear the back stack
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                            // Avoid multiple copies of the same destination when re-selecting the same item
+                            launchSingleTop = true
                         }
                     },
                     icon = { Icon(Icons.Default.ExitToApp, contentDescription = "Logout") },
@@ -70,14 +75,18 @@ fun OrganizerHomeScreen(navController: NavController) {
                 )
             }
         }
-    ) { padding ->
+    ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
+                .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
-            Text("🍽️ Caterer Home")
+            when (selectedIndex.value) {
+                0 -> Text("Home Screen")
+                1 -> Text("Create Event Screen")
+                2 -> Text("My Events Screen")
+            }
         }
     }
 }

@@ -11,19 +11,31 @@ import kotlinx.coroutines.launch
 
 class FindCatererViewModel : ViewModel() {
 
-    private val _caterers = MutableStateFlow<List<CatererResponse>>(emptyList())
+    private val _caterers =
+        MutableStateFlow<List<CatererResponse>>(emptyList())
     val caterers: StateFlow<List<CatererResponse>> = _caterers
 
-    private val _error = MutableStateFlow<String?>(null)
+    private val _error =
+        MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    private val _loading = MutableStateFlow(false)
+    private val _loading =
+        MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading
 
-    fun loadCaterers(eventId: Int) {
+    fun loadCaterers(
+        eventId: Int,
+        minPrice: Double? = null,
+        maxPrice: Double? = null,
+        minRating: Double? = null,
+        vegOnly: Boolean? = null,
+        nonVegOnly: Boolean? = null,
+        sortBy: String? = null
+    ) {
         viewModelScope.launch {
             try {
                 _loading.value = true
+                _error.value = null
 
                 val token = FirebaseAuth.getInstance()
                     .currentUser
@@ -31,11 +43,18 @@ class FindCatererViewModel : ViewModel() {
                     ?.result
                     ?.token ?: return@launch
 
-                val response = RetrofitClient.apiService
-                    .getMatchingCaterers(
-                        "Bearer $token",
-                        eventId
-                    )
+                val response =
+                    RetrofitClient.apiService
+                        .getMatchingCaterers(
+                            "Bearer $token",
+                            eventId,
+                            minPrice,
+                            maxPrice,
+                            minRating,
+                            vegOnly,
+                            nonVegOnly,
+                            sortBy
+                        )
 
                 if (response.isSuccessful) {
                     _caterers.value = response.body() ?: emptyList()
@@ -64,12 +83,13 @@ class FindCatererViewModel : ViewModel() {
                     ?.result
                     ?.token ?: return@launch
 
-                val response = RetrofitClient.apiService
-                    .bookCaterer(
-                        "Bearer $token",
-                        eventId,
-                        catererId
-                    )
+                val response =
+                    RetrofitClient.apiService
+                        .bookCaterer(
+                            "Bearer $token",
+                            eventId,
+                            catererId
+                        )
 
                 if (response.isSuccessful) {
                     onSuccess()

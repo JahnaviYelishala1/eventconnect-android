@@ -9,16 +9,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.eventconnect.ui.auth.LoginScreen
 import com.example.eventconnect.ui.auth.RoleSelectionScreen
 import com.example.eventconnect.ui.auth.SignupScreen
 import com.example.eventconnect.ui.home.*
 import com.example.eventconnect.ui.admin.AdminNgoReviewScreen
-import com.example.eventconnect.ui.caterer.CatererBookingsScreen
+import com.example.eventconnect.ui.caterer.CatererProfileScreen
 import com.example.eventconnect.ui.ngo.NgoRegistrationScreen
 import com.example.eventconnect.ui.ngo.NgoDocumentUploadScreen
 import com.example.eventconnect.ui.ngo.NgoDocumentsScreen
@@ -27,7 +29,6 @@ import com.example.eventconnect.ui.profile.NgoProfileScreen
 
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
     object Home : BottomNavItem("ngo-home", Icons.Default.Home, "Home")
-    object MyEvents : BottomNavItem("my-events", Icons.Default.List, "My Events")
     object Profile : BottomNavItem("ngo-profile", Icons.Default.AccountCircle, "Profile")
 }
 
@@ -40,7 +41,6 @@ fun NavGraph() {
 
     val bottomNavItems = listOf(
         BottomNavItem.Home,
-        BottomNavItem.MyEvents,
         BottomNavItem.Profile
     )
 
@@ -92,31 +92,38 @@ fun NavGraph() {
             composable("caterer-home") { CatererHomeScreen(navController) }
             composable(BottomNavItem.Home.route) { NgoHomeScreen(navController) }
             composable("create-event") { CreateEventScreen(navController) }
-            composable(BottomNavItem.MyEvents.route) { MyEventsScreen(navController) }
+            composable("my-events") { MyEventsScreen(navController) }
             composable("admin-ngo-review") { AdminNgoReviewScreen(navController) }
             composable("ngo-register") { NgoRegistrationScreen(navController) }
             composable("ngo-documents") { NgoDocumentUploadScreen(navController) }
             composable("ngo-documents-list") { NgoDocumentsScreen(navController) }
             composable(BottomNavItem.Profile.route) { NgoProfileScreen(navController) }
             composable("ngo-profile-edit") { NgoProfileEditScreen(navController) }
-            composable("find-caterer/{eventId}") { backStackEntry ->
+            composable("create-caterer-profile") {
+                CatererProfileScreen(navController)
+            }
 
-                val eventId =
-                    backStackEntry.arguments
-                        ?.getString("eventId")
-                        ?.toIntOrNull() ?: 0
+            composable("caterer-profile") {
+                CatererProfileScreen(navController)
+            }
+
+            composable(
+                route = "find-caterer/{eventId}",
+                arguments = listOf(
+                    navArgument("eventId") {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+
+                val eventId = backStackEntry.arguments
+                    ?.getInt("eventId") ?: 0
 
                 FindCatererScreen(
                     navController = navController,
                     eventId = eventId
                 )
             }
-
-            composable("caterer-bookings") {
-                CatererBookingsScreen(navController)
-            }
-
-
         }
     }
 }

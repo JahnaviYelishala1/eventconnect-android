@@ -1,16 +1,21 @@
 package com.example.eventconnect.ui.home
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.eventconnect.R
 import com.example.eventconnect.data.network.RetrofitClient
 import com.example.eventconnect.ui.auth.getFirebaseIdToken
 import com.google.firebase.auth.FirebaseAuth
@@ -29,124 +34,94 @@ fun NgoHomeScreen(navController: NavController) {
         getFirebaseIdToken(
             onTokenReceived = { token ->
                 scope.launch {
+                    try {
+                        val ngoRes = RetrofitClient.apiService.getMyNgo("Bearer $token")
 
-                    // 1️⃣ Get NGO meta info
-                    val ngoRes = RetrofitClient.apiService.getMyNgo(
-                        token = "Bearer $token"
-                    )
-
-                    if (!ngoRes.isSuccessful || ngoRes.body() == null) {
-                        navController.navigate("ngo-register") {
-                            popUpTo("ngo-home") { inclusive = true }
+                        if (!ngoRes.isSuccessful || ngoRes.body() == null) {
+                            navController.navigate("ngo-register") { popUpTo("ngo-home") { inclusive = true } }
+                            return@launch
                         }
-                        return@launch
-                    }
 
-                    val ngo = ngoRes.body()!!
+                        val ngo = ngoRes.body()!!
 
-                    // 🔴 NGO not registered
-                    if (!ngo.exists) {
-                        navController.navigate("ngo-register") {
-                            popUpTo("ngo-home") { inclusive = true }
+                        if (!ngo.exists) {
+                            navController.navigate("ngo-register") { popUpTo("ngo-home") { inclusive = true } }
+                            return@launch
                         }
-                        return@launch
-                    }
 
-                    status = ngo.status ?: "PENDING"
+                        status = ngo.status ?: "PENDING"
 
-                    // 2️⃣ Documents uploaded?
-                    if (!ngo.documents_uploaded) {
-                        navController.navigate("ngo-documents") {
-                            popUpTo("ngo-home") { inclusive = true }
+                        if (!ngo.documents_uploaded) {
+                            navController.navigate("ngo-documents") { popUpTo("ngo-home") { inclusive = true } }
+                            return@launch
                         }
-                        return@launch
-                    }
 
-                    // 3️⃣ Status message
-                    message = when (status) {
-                        "PENDING" -> "🕒 Documents under verification"
-                        "REJECTED" -> "❌ NGO verification rejected"
-                        "SUSPENDED" -> "⛔ NGO account suspended"
-                        "VERIFIED" -> "✅ NGO Verified. You can now accept food."
-                        else -> "Unknown NGO status"
+                        message = when (status) {
+                            "PENDING" -> "🕒 Documents under verification"
+                            "REJECTED" -> "❌ NGO verification rejected"
+                            "SUSPENDED" -> "⛔ NGO account suspended"
+                            "VERIFIED" -> "✅ NGO Verified. You can now accept food."
+                            else -> "Unknown NGO status"
+                        }
+                    } finally {
+                        loading = false
                     }
-
-                    loading = false
                 }
             },
             onError = {
                 FirebaseAuth.getInstance().signOut()
-                navController.navigate("login") {
-                    popUpTo(0) { inclusive = true }
-                }
+                navController.navigate("login") { popUpTo(0) { inclusive = true } }
             }
         )
     }
 
-    // 🔄 LOADING
-    if (loading) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-        return
-    }
-
-    // 🧱 UI
     Scaffold(
+        containerColor = Color(0xFFFAF8F0),
         topBar = {
             TopAppBar(
-                title = { Text("NGO Dashboard") },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                title = { Text("NGO Dashboard", color = Color.Black, fontWeight = FontWeight.Bold) },
                 actions = {
                     IconButton(onClick = {
                         FirebaseAuth.getInstance().signOut()
-                        navController.navigate("login") {
-                            popUpTo(0) { inclusive = true }
-                        }
+                        navController.navigate("login") { popUpTo(0) { inclusive = true } }
                     }) {
-                        Icon(Icons.Default.ExitToApp, "Logout")
+                        Icon(Icons.Default.ExitToApp, "Logout", tint = Color.Black)
                     }
                 }
             )
-        },
-        bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = true,
-                    onClick = { },
-                    icon = { Icon(Icons.Default.List, null) },
-                    label = { Text("Status") }
-                )
-
-                NavigationBarItem(
-                    selected = false,
-                    enabled = status == "VERIFIED",
-                    onClick = {
-                        navController.navigate("ngo-profile")
-                    },
-                    icon = { Icon(Icons.Default.Check, null) },
-                    label = { Text("Profile") }
-                )
+        }
+    ) { padding ->
+        if (loading) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
+            return@Scaffold
         }
 
-    ) { padding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            contentAlignment = Alignment.Center
+                .padding(padding)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Card(
-                modifier = Modifier.padding(24.dp),
-                elevation = CardDefaults.cardElevation(6.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                shape = MaterialTheme.shapes.large,
+                elevation = CardDefaults.cardElevation(4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("NGO Status", style = MaterialTheme.typography.titleLarge)
-                    Divider(Modifier.padding(vertical = 12.dp))
-                    Text(message)
+                    Text("NGO Status", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                    Divider(modifier = Modifier.padding(vertical = 12.dp))
+                    Text(message, fontSize = 16.sp, color = Color.DarkGray)
                 }
             }
         }
