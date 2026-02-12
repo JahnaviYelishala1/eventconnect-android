@@ -24,34 +24,20 @@ fun CatererHomeScreen(navController: NavController) {
         bottomBar = {
             NavigationBar {
 
-                // ---------------- HOME ----------------
                 NavigationBarItem(
                     selected = selectedIndex == 0,
-                    onClick = {
-                        selectedIndex = 0
-                    },
-                    icon = {
-                        Icon(
-                            Icons.Default.Restaurant,
-                            contentDescription = "Home"
-                        )
-                    },
+                    onClick = { selectedIndex = 0 },
+                    icon = { Icon(Icons.Default.Restaurant, null) },
                     label = { Text("Home") }
                 )
 
-                // ---------------- BOOKINGS ----------------
                 NavigationBarItem(
                     selected = selectedIndex == 1,
                     onClick = {
                         selectedIndex = 1
                         navController.navigate("caterer-bookings")
                     },
-                    icon = {
-                        Icon(
-                            Icons.Default.List,
-                            contentDescription = "Bookings"
-                        )
-                    },
+                    icon = { Icon(Icons.Default.List, null) },
                     label = { Text("Bookings") }
                 )
 
@@ -61,13 +47,10 @@ fun CatererHomeScreen(navController: NavController) {
                         selectedIndex = 2
                         navController.navigate("caterer-profile")
                     },
-                    icon = {
-                        Icon(Icons.Default.AccountCircle, null)
-                    },
+                    icon = { Icon(Icons.Default.AccountCircle, null) },
                     label = { Text("Profile") }
                 )
 
-                // ---------------- LOGOUT ----------------
                 NavigationBarItem(
                     selected = false,
                     onClick = {
@@ -76,12 +59,7 @@ fun CatererHomeScreen(navController: NavController) {
                             popUpTo(0) { inclusive = true }
                         }
                     },
-                    icon = {
-                        Icon(
-                            Icons.Default.ExitToApp,
-                            contentDescription = "Logout"
-                        )
-                    },
+                    icon = { Icon(Icons.Default.ExitToApp, null) },
                     label = { Text("Logout") }
                 )
             }

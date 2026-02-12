@@ -182,12 +182,42 @@ interface ApiService {
         @Path("eventId") eventId: Int
     ): Response<EventBookingStatusResponse>
 
+    @GET("api/caterers/profile")
+    suspend fun getCatererProfile(
+        @Header("Authorization") token: String
+    ): Response<CatererProfileResponse>
+
     @POST("api/caterers/profile")
     suspend fun createCatererProfile(
         @Header("Authorization") token: String,
-        @Body request: CatererProfileRequest
+        @Body request: CatererCreateRequest
     ): Response<Map<String, String>>
 
+    @PUT("api/caterers/profile/me")
+    suspend fun updateCatererProfile(
+        @Header("Authorization") token: String,
+        @Body request: CatererCreateRequest
+    ): Response<CatererProfileResponse>
+
+    @Multipart
+    @POST("api/caterers/upload-image")
+    suspend fun uploadCatererImage(
+        @Header("Authorization") token: String,
+        @Part file: MultipartBody.Part
+    ): Response<ImageUploadResponse>
+
+    @POST("api/caterers/{catererId}/rate")
+    suspend fun rateCaterer(
+        @Header("Authorization") token: String,
+        @Path("catererId") catererId: Int,
+        @Body request: RatingRequest
+    ): Response<Map<String, String>>
+
+    @GET("api/caterers/{catererId}/reviews")
+    suspend fun getCatererReviews(
+        @Header("Authorization") token: String,
+        @Path("catererId") catererId: Int
+    ): Response<List<ReviewResponse>>
 
 
 }

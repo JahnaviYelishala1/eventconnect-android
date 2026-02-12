@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.material3)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
@@ -86,6 +87,6 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation ("com.google.accompanist:accompanist-permissions:0.28.0")
-
+    implementation("androidx.compose.foundation:foundation-layout:1.5.4")
 
 }
