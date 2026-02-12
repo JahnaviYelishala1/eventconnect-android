@@ -27,7 +27,6 @@ class AdminNgoViewModel : ViewModel() {
                 cont.resumeWithException(Exception("User not logged in"))
                 return@suspendCancellableCoroutine
             }
-
             user.getIdToken(true)
                 .addOnSuccessListener { result ->
                     cont.resume(result.token!!)

@@ -141,5 +141,40 @@ interface ApiService {
         @Part file: MultipartBody.Part
     ): Response<ImageUploadResponse>
 
+    // ---------------- CATERER MATCH ----------------
+
+    @GET("api/caterers/match/{eventId}")
+    suspend fun getMatchingCaterers(
+        @Header("Authorization") token: String,
+        @Path("eventId") eventId: Int
+    ): Response<List<CatererResponse>>
+
+    @POST("api/caterers/book/{eventId}/{catererId}")
+    suspend fun bookCaterer(
+        @Header("Authorization") token: String,
+        @Path("eventId") eventId: Int,
+        @Path("catererId") catererId: Int
+    ): Response<Map<String, String>>
+
+    @GET("api/bookings/caterer-requests")
+    suspend fun getCatererBookings(
+        @Header("Authorization") token: String
+    ): Response<List<BookingResponse>>
+
+
+    @PATCH("api/bookings/respond/{bookingId}")
+    suspend fun respondBooking(
+        @Header("Authorization") token: String,
+        @Path("bookingId") bookingId: Int,
+        @Query("status") status: String
+    ): Response<Map<String, String>>
+
+    @GET("api/bookings/event/{eventId}")
+    suspend fun getEventBookingStatus(
+        @Header("Authorization") token: String,
+        @Path("eventId") eventId: Int
+    ): Response<EventBookingStatusResponse>
+
+
 
 }

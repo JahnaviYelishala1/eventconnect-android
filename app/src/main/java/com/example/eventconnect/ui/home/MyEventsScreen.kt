@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.eventconnect.data.network.EventBookingStatusResponse
 import com.example.eventconnect.data.network.EventResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -20,20 +21,27 @@ fun MyEventsScreen(
     navController: NavController,
     viewModel: MyEventsViewModel = viewModel()
 ) {
+
     val events by viewModel.events.collectAsState()
     val error by viewModel.error.collectAsState()
+    val bookingInfo by viewModel.bookingInfo.collectAsState()
 
     var showCompleteSheet by remember { mutableStateOf(false) }
     var selectedEventId by remember { mutableStateOf<Int?>(null) }
 
+    LaunchedEffect(Unit) {
+        viewModel.loadEvents()
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("My Events") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    IconButton(onClick = {
+                        navController.popBackStack()
+                    }) {
+                        Icon(Icons.Default.ArrowBack, null)
                     }
                 }
             )
@@ -48,7 +56,8 @@ fun MyEventsScreen(
                         .padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(error!!, color = MaterialTheme.colorScheme.error)
+                    Text(error!!,
+                        color = MaterialTheme.colorScheme.error)
                 }
             }
 
@@ -69,17 +78,19 @@ fun MyEventsScreen(
                         .fillMaxSize()
                         .padding(padding),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement =
+                        Arrangement.spacedBy(12.dp)
                 ) {
                     items(events) { event ->
+
                         EventCard(
+                            navController = navController,
                             event = event,
+                            bookingInfo =
+                                bookingInfo[event.id],
                             onCompleteClick = {
-                                // ✅ Only allow completion for CREATED events
-                                if (event.status == "CREATED") {
-                                    selectedEventId = event.id
-                                    showCompleteSheet = true
-                                }
+                                selectedEventId = event.id
+                                showCompleteSheet = true
                             }
                         )
                     }
@@ -88,16 +99,15 @@ fun MyEventsScreen(
         }
     }
 
-    // ✅ Bottom Sheet
     if (showCompleteSheet && selectedEventId != null) {
         CompleteEventBottomSheet(
             onDismiss = { showCompleteSheet = false },
             onSubmit = { prepared, consumed, location ->
                 viewModel.completeEvent(
-                    eventId = selectedEventId!!,
-                    foodPrepared = prepared,
-                    foodConsumed = consumed,
-                    surplusLocation = location
+                    selectedEventId!!,
+                    prepared,
+                    consumed,
+                    location
                 )
                 showCompleteSheet = false
             }
@@ -105,128 +115,156 @@ fun MyEventsScreen(
     }
 }
 
-/* -----------------------------------------------------
-   🔹 EVENT CARD (FINAL)
------------------------------------------------------ */
 
 @Composable
 fun EventCard(
+    navController: NavController,
     event: EventResponse,
+    bookingInfo: EventBookingStatusResponse?,
     onCompleteClick: () -> Unit
 ) {
-    val foodQty = "%.1f".format(event.estimated_food_quantity)
+
+    val foodQty =
+        "%.1f".format(event.estimated_food_quantity)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(6.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        elevation = CardDefaults.cardElevation(6.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement =
+                Arrangement.spacedBy(12.dp)
         ) {
 
-            Text(event.event_name, style = MaterialTheme.typography.titleLarge)
+            Text(event.event_name,
+                style = MaterialTheme.typography.titleLarge)
 
-            // ✅ STATUS CHIP
             AssistChip(
                 onClick = {},
-                label = { Text(event.status.replace("_", " ")) },
-                colors = AssistChipDefaults.assistChipColors(
-                    containerColor = when (event.status) {
-                        "SURPLUS_AVAILABLE" ->
-                            MaterialTheme.colorScheme.errorContainer
-                        "COMPLETED" ->
-                            MaterialTheme.colorScheme.primaryContainer
-                        else ->
-                            MaterialTheme.colorScheme.surfaceVariant
-                    }
-                )
+                label = { Text(event.status.replace("_", " ")) }
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AssistChip(onClick = {}, label = { Text(event.event_type) })
-                AssistChip(onClick = {}, label = { Text(event.location_type) })
+            // 🔥 Show Caterer Name if booked
+            bookingInfo?.caterer_name?.let {
+                Text("Caterer: $it",
+                    style = MaterialTheme.typography.bodyMedium)
             }
 
             Divider()
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement =
+                    Arrangement.SpaceBetween
             ) {
-                InfoColumn("Guests", event.attendees.toString())
-                InfoColumn("Hours", event.duration_hours.toString())
-                InfoColumn("Meal", event.meal_style)
+                InfoColumn("Guests",
+                    event.attendees.toString())
+                InfoColumn("Hours",
+                    event.duration_hours.toString())
+                InfoColumn("Meal",
+                    event.meal_style)
             }
 
             Surface(
-                color = MaterialTheme.colorScheme.primaryContainer,
+                color =
+                    MaterialTheme.colorScheme.primaryContainer,
                 shape = MaterialTheme.shapes.large
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement =
+                        Arrangement.SpaceBetween
                 ) {
                     Text("Estimated Food")
-                    Text(
-                        "$foodQty ${event.unit}",
-                        style = MaterialTheme.typography.headlineSmall
-                    )
+                    Text("$foodQty ${event.unit}")
                 }
             }
 
-            // ✅ BUTTON CHANGES BASED ON STATUS
             when (event.status) {
 
                 "CREATED" -> {
-                    Button(
-                        onClick = onCompleteClick,
-                        modifier = Modifier.fillMaxWidth()
+                    Column(
+                        verticalArrangement =
+                            Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Complete Event")
+                        Button(
+                            onClick = onCompleteClick,
+                            modifier =
+                                Modifier.fillMaxWidth()
+                        ) {
+                            Text("Complete Event")
+                        }
+
+                        Button(
+                            onClick = {
+                                navController.navigate(
+                                    "find-caterer/${event.id}"
+                                )
+                            },
+                            modifier =
+                                Modifier.fillMaxWidth()
+                        ) {
+                            Text("Find Caterer")
+                        }
+                    }
+                }
+
+                "BOOKING_REQUESTED" -> {
+                    AssistChip(
+                        onClick = {},
+                        label = {
+                            Text("Waiting for Caterer Response")
+                        }
+                    )
+                }
+
+                "BOOKED" -> {
+                    Column(
+                        verticalArrangement =
+                            Arrangement.spacedBy(8.dp)
+                    ) {
+                        AssistChip(
+                            onClick = {},
+                            label = {
+                                Text("Caterer Confirmed")
+                            }
+                        )
+
+                        Button(
+                            onClick = onCompleteClick,
+                            modifier =
+                                Modifier.fillMaxWidth()
+                        ) {
+                            Text("Complete Event")
+                        }
                     }
                 }
 
                 "SURPLUS_AVAILABLE" -> {
-                    Button(
+                    AssistChip(
                         onClick = {},
-                        enabled = false,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            disabledContainerColor =
-                                MaterialTheme.colorScheme.errorContainer
-                        )
-                    ) {
-                        Text("Surplus Available")
-                    }
+                        label = {
+                            Text("Surplus Available")
+                        }
+                    )
                 }
 
                 "COMPLETED" -> {
-                    Button(
+                    AssistChip(
                         onClick = {},
-                        enabled = false,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            disabledContainerColor =
-                                MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Text("Completed")
-                    }
+                        label = {
+                            Text("Event Completed")
+                        }
+                    )
                 }
             }
         }
     }
 }
 
-/* -----------------------------------------------------
-   🔹 INFO COLUMN
------------------------------------------------------ */
 
 @Composable
 private fun InfoColumn(label: String, value: String) {

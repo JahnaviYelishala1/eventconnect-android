@@ -18,6 +18,7 @@ import com.example.eventconnect.ui.auth.RoleSelectionScreen
 import com.example.eventconnect.ui.auth.SignupScreen
 import com.example.eventconnect.ui.home.*
 import com.example.eventconnect.ui.admin.AdminNgoReviewScreen
+import com.example.eventconnect.ui.caterer.CatererBookingsScreen
 import com.example.eventconnect.ui.ngo.NgoRegistrationScreen
 import com.example.eventconnect.ui.ngo.NgoDocumentUploadScreen
 import com.example.eventconnect.ui.ngo.NgoDocumentsScreen
@@ -98,6 +99,24 @@ fun NavGraph() {
             composable("ngo-documents-list") { NgoDocumentsScreen(navController) }
             composable(BottomNavItem.Profile.route) { NgoProfileScreen(navController) }
             composable("ngo-profile-edit") { NgoProfileEditScreen(navController) }
+            composable("find-caterer/{eventId}") { backStackEntry ->
+
+                val eventId =
+                    backStackEntry.arguments
+                        ?.getString("eventId")
+                        ?.toIntOrNull() ?: 0
+
+                FindCatererScreen(
+                    navController = navController,
+                    eventId = eventId
+                )
+            }
+
+            composable("caterer-bookings") {
+                CatererBookingsScreen(navController)
+            }
+
+
         }
     }
 }
