@@ -7,9 +7,11 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class MyEventsViewModel : ViewModel() {
 
+    // ---------------- EVENTS ----------------
     private val _events =
         MutableStateFlow<List<EventResponse>>(emptyList())
     val events: StateFlow<List<EventResponse>> = _events
@@ -18,88 +20,74 @@ class MyEventsViewModel : ViewModel() {
         MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    // 🔥 Booking Info Map (eventId → booking data)
-    private val _bookingInfo =
-        MutableStateFlow<Map<Int, EventBookingStatusResponse>>(emptyMap())
-    val bookingInfo:
-            StateFlow<Map<Int, EventBookingStatusResponse>> = _bookingInfo
-
+    // =========================================================
+    // LOAD EVENTS
+    // =========================================================
     fun loadEvents() {
+
         viewModelScope.launch {
+
             try {
-                val token = FirebaseAuth.getInstance()
-                    .currentUser
-                    ?.getIdToken(false)
-                    ?.result
-                    ?.token ?: return@launch
+                _error.value = null
+
+                val currentUser =
+                    FirebaseAuth.getInstance().currentUser
+                        ?: run {
+                            _error.value = "User not logged in"
+                            return@launch
+                        }
+
+                val token =
+                    currentUser.getIdToken(false).await().token
+                        ?: run {
+                            _error.value = "Token error"
+                            return@launch
+                        }
 
                 val response =
                     RetrofitClient.apiService
                         .getMyEvents("Bearer $token")
 
                 if (response.isSuccessful) {
-                    val eventList =
-                        response.body() ?: emptyList()
-
-                    _events.value = eventList
-
-                    // 🔥 Fetch booking status for each event
-                    eventList.forEach { event ->
-                        fetchBookingStatus(event.id)
-                    }
-
+                    _events.value = response.body() ?: emptyList()
                 } else {
-                    _error.value = "Failed to load events"
+                    _error.value =
+                        "Failed to load events (${response.code()})"
                 }
 
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = e.localizedMessage
             }
         }
     }
 
-    private fun fetchBookingStatus(eventId: Int) {
-        viewModelScope.launch {
-            try {
-                val token = FirebaseAuth.getInstance()
-                    .currentUser
-                    ?.getIdToken(false)
-                    ?.result
-                    ?.token ?: return@launch
-
-                val res =
-                    RetrofitClient.apiService
-                        .getEventBookingStatus(
-                            "Bearer $token",
-                            eventId
-                        )
-
-                if (res.isSuccessful && res.body() != null) {
-                    val currentMap =
-                        _bookingInfo.value.toMutableMap()
-
-                    currentMap[eventId] = res.body()!!
-
-                    _bookingInfo.value = currentMap
-                }
-
-            } catch (_: Exception) { }
-        }
-    }
-
+    // =========================================================
+    // COMPLETE EVENT
+    // =========================================================
     fun completeEvent(
         eventId: Int,
         foodPrepared: Double,
         foodConsumed: Double,
         surplusLocation: SurplusLocationRequest?
     ) {
+
         viewModelScope.launch {
+
             try {
-                val token = FirebaseAuth.getInstance()
-                    .currentUser
-                    ?.getIdToken(false)
-                    ?.result
-                    ?.token ?: return@launch
+
+                val currentUser =
+                    FirebaseAuth.getInstance().currentUser
+                        ?: run {
+                            _error.value = "User not logged in"
+                            return@launch
+                        }
+
+                val token =
+                    currentUser.getIdToken(false).await().token
+                        ?: run {
+                            _error.value = "Token error"
+                            return@launch
+                        }
 
                 val response =
                     RetrofitClient.apiService.completeEvent(
@@ -113,13 +101,14 @@ class MyEventsViewModel : ViewModel() {
                     )
 
                 if (response.isSuccessful) {
-                    loadEvents()
+                    loadEvents() // Refresh list
                 } else {
-                    _error.value = "Failed to complete event"
+                    _error.value =
+                        "Failed to complete event (${response.code()})"
                 }
 
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = e.localizedMessage
             }
         }
     }

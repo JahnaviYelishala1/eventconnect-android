@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -13,9 +14,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
-import com.example.eventconnect.ui.auth.LoginScreen
-import com.example.eventconnect.ui.auth.RoleSelectionScreen
-import com.example.eventconnect.ui.auth.SignupScreen
+import com.example.eventconnect.ui.auth.*
 import com.example.eventconnect.ui.home.*
 import com.example.eventconnect.ui.admin.AdminNgoReviewScreen
 import com.example.eventconnect.ui.ngo.*
@@ -28,23 +27,37 @@ import com.example.eventconnect.ui.profile.*
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
 
     // Organizer
-    object OrganizerHome : BottomNavItem("organizer-home", Icons.Default.Home, "Home")
-    object OrganizerEvents : BottomNavItem("my-events", Icons.Default.List, "My Events")
-    object OrganizerProfile : BottomNavItem("organizer-profile", Icons.Default.AccountCircle, "Profile")
+    object OrganizerHome :
+        BottomNavItem("organizer-home", Icons.Default.Home, "Home")
+
+    object OrganizerEvents :
+        BottomNavItem("my-events", Icons.Default.List, "My Events")
+
+    object OrganizerCreateEvent :
+        BottomNavItem("create-event", Icons.Default.Add, "Create")
+
+    object OrganizerProfile :
+        BottomNavItem("organizer-profile", Icons.Default.AccountCircle, "Profile")
 
     // Caterer
-    object CatererHome : BottomNavItem("caterer-home", Icons.Default.Home, "Home")
-    object CatererBookings : BottomNavItem("caterer-bookings", Icons.Default.List, "Bookings")
-    object CatererProfile : BottomNavItem("caterer-profile", Icons.Default.AccountCircle, "Profile")
+    object CatererHome :
+        BottomNavItem("caterer-home", Icons.Default.Home, "Home")
+
+    object CatererBookings :
+        BottomNavItem("caterer-bookings", Icons.Default.List, "Bookings")
+
+    object CatererProfile :
+        BottomNavItem("caterer-profile", Icons.Default.AccountCircle, "Profile")
 
     // NGO
-    object NgoHome : BottomNavItem("ngo-home", Icons.Default.Home, "Home")
-    object NgoProfile : BottomNavItem("ngo-profile", Icons.Default.AccountCircle, "Profile")
+    object NgoHome :
+        BottomNavItem("ngo-home", Icons.Default.Home, "Home")
+
+    object NgoProfile :
+        BottomNavItem("ngo-profile", Icons.Default.AccountCircle, "Profile")
 }
 
-/* -------------------------------------------------- */
 /* ------------------- NAV GRAPH -------------------- */
-/* -------------------------------------------------- */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,6 +70,7 @@ fun NavGraph() {
     val organizerRoutes = listOf(
         BottomNavItem.OrganizerHome.route,
         BottomNavItem.OrganizerEvents.route,
+        BottomNavItem.OrganizerCreateEvent.route,
         BottomNavItem.OrganizerProfile.route
     )
 
@@ -74,23 +88,41 @@ fun NavGraph() {
     Scaffold(
         bottomBar = {
 
+            fun navigateTo(route: String) {
+                navController.navigate(route) {
+                    launchSingleTop = true
+                    restoreState = true
+                    popUpTo(navController.graph.startDestinationId) {
+                        saveState = true
+                    }
+                }
+            }
+
             when {
+
+                /* ---------------- ORGANIZER ---------------- */
+
                 currentRoute in organizerRoutes -> {
                     NavigationBar {
                         listOf(
                             BottomNavItem.OrganizerHome,
                             BottomNavItem.OrganizerEvents,
+                            BottomNavItem.OrganizerCreateEvent,
                             BottomNavItem.OrganizerProfile
                         ).forEach { item ->
                             NavigationBarItem(
                                 selected = currentRoute == item.route,
-                                onClick = { navController.navigate(item.route) },
-                                icon = { Icon(item.icon, contentDescription = item.label) },
+                                onClick = { navigateTo(item.route) },
+                                icon = {
+                                    Icon(item.icon, contentDescription = item.label)
+                                },
                                 label = { Text(item.label) }
                             )
                         }
                     }
                 }
+
+                /* ---------------- CATERER ---------------- */
 
                 currentRoute in catererRoutes -> {
                     NavigationBar {
@@ -101,13 +133,17 @@ fun NavGraph() {
                         ).forEach { item ->
                             NavigationBarItem(
                                 selected = currentRoute == item.route,
-                                onClick = { navController.navigate(item.route) },
-                                icon = { Icon(item.icon, contentDescription = item.label) },
+                                onClick = { navigateTo(item.route) },
+                                icon = {
+                                    Icon(item.icon, contentDescription = item.label)
+                                },
                                 label = { Text(item.label) }
                             )
                         }
                     }
                 }
+
+                /* ---------------- NGO ---------------- */
 
                 currentRoute in ngoRoutes -> {
                     NavigationBar {
@@ -117,8 +153,10 @@ fun NavGraph() {
                         ).forEach { item ->
                             NavigationBarItem(
                                 selected = currentRoute == item.route,
-                                onClick = { navController.navigate(item.route) },
-                                icon = { Icon(item.icon, contentDescription = item.label) },
+                                onClick = { navigateTo(item.route) },
+                                icon = {
+                                    Icon(item.icon, contentDescription = item.label)
+                                },
                                 label = { Text(item.label) }
                             )
                         }
@@ -138,7 +176,9 @@ fun NavGraph() {
 
             composable("login") {
                 LoginScreen(
-                    onNavigateToSignup = { navController.navigate("signup") },
+                    onNavigateToSignup = {
+                        navController.navigate("signup")
+                    },
                     onLoginSuccess = {
                         navController.navigate("home-gate") {
                             popUpTo("login") { inclusive = true }
@@ -149,7 +189,9 @@ fun NavGraph() {
 
             composable("signup") {
                 SignupScreen(
-                    onNavigateToLogin = { navController.popBackStack() },
+                    onNavigateToLogin = {
+                        navController.popBackStack()
+                    },
                     onSignupSuccess = {
                         navController.navigate("home-gate") {
                             popUpTo("signup") { inclusive = true }
@@ -176,39 +218,48 @@ fun NavGraph() {
                 MyEventsScreen(navController)
             }
 
-            composable("create-event") {
+            composable(BottomNavItem.OrganizerCreateEvent.route) {
                 CreateEventScreen(navController)
             }
 
             composable(
-                route = "find-caterer/{eventId}",
-                arguments = listOf(navArgument("eventId") {
-                    type = NavType.IntType
-                })
+                route = "find_caterer/{eventId}?mealStyle={mealStyle}&foodType={foodType}",
+                arguments = listOf(
+                    navArgument("eventId") {
+                        type = NavType.IntType
+                    },
+                    navArgument("mealStyle") {
+                        type = NavType.StringType
+                        defaultValue = "Buffet"
+                        nullable = true
+                    },
+                    navArgument("foodType") {
+                        type = NavType.StringType
+                        defaultValue = "Both"
+                        nullable = true
+                    }
+                )
             ) { backStackEntry ->
 
-                val eventId = backStackEntry.arguments?.getInt("eventId") ?: 0
+                val eventId =
+                    backStackEntry.arguments?.getInt("eventId") ?: 0
+
+                val mealStyle =
+                    backStackEntry.arguments?.getString("mealStyle") ?: "Buffet"
+
+                val foodType =
+                    backStackEntry.arguments?.getString("foodType") ?: "Both"
 
                 FindCatererScreen(
                     navController = navController,
-                    eventId = eventId
+                    eventId = eventId,
+                    defaultMealStyle = mealStyle,
+                    defaultFoodType = foodType
                 )
             }
 
-            composable(
-                route = "booking-status/{eventId}",
-                arguments = listOf(navArgument("eventId") {
-                    type = NavType.IntType
-                })
-            ) { backStackEntry ->
 
-                val eventId = backStackEntry.arguments?.getInt("eventId") ?: 0
 
-                BookingStatusScreen(
-                    navController = navController,
-                    eventId = eventId
-                )
-            }
 
             composable(BottomNavItem.OrganizerProfile.route) {
                 OrganizerProfileScreen(navController)
@@ -220,9 +271,6 @@ fun NavGraph() {
                 CatererHomeScreen(navController)
             }
 
-            composable(BottomNavItem.CatererBookings.route) {
-                CatererBookingsScreen(navController)
-            }
 
             composable(BottomNavItem.CatererProfile.route) {
                 CatererProfileScreen(navController)

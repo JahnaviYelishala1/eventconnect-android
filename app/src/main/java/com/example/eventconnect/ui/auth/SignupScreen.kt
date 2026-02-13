@@ -1,13 +1,21 @@
 package com.example.eventconnect.ui.auth
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-
+import com.example.eventconnect.R
 
 @Composable
 fun SignupScreen(
@@ -17,6 +25,7 @@ fun SignupScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
 
     val authState by authViewModel.authState.collectAsState()
 
@@ -26,53 +35,89 @@ fun SignupScreen(
         }
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center
+            .background(Color(0xFFF6EED2)),
+        contentAlignment = Alignment.Center
     ) {
-
-        Text("Sign Up", style = MaterialTheme.typography.headlineLarge)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = { authViewModel.signup(email, password) },
-            modifier = Modifier.fillMaxWidth()
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
         ) {
-            Text("Create Account")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        TextButton(onClick = onNavigateToLogin) {
-            Text("Already have an account? Login")
-        }
-
-        authState?.let {
-            if (it != "SUCCESS") {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = it, color = MaterialTheme.colorScheme.error)
+            Spacer(Modifier.height(40.dp))
+            Image(
+                painter = painterResource(R.drawable.eventeats_logo),
+                contentDescription = "Logo",
+                modifier = Modifier.size(70.dp)
+            )
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = "Signup",
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+            Spacer(Modifier.height(32.dp))
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Enter your Email ID") },
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White, RoundedCornerShape(16.dp))
+            )
+            Spacer(Modifier.height(16.dp))
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Enter your password") },
+                visualTransformation = PasswordVisualTransformation(),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFF6EED2), RoundedCornerShape(16.dp))
+            )
+            Spacer(Modifier.height(16.dp))
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                label = { Text("Enter your password") },
+                visualTransformation = PasswordVisualTransformation(),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFF6EED2), RoundedCornerShape(16.dp))
+            )
+            Spacer(Modifier.height(32.dp))
+            Button(
+                onClick = { authViewModel.signup(email, password) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF6B7C6F)
+                )
+            ) {
+                Text("Signup", fontSize = 18.sp, color = Color.White)
+            }
+            Spacer(Modifier.height(16.dp))
+            TextButton(onClick = onNavigateToLogin) {
+                Text(
+                    "Already have an account ? Signup",
+                    color = Color.Black,
+                    fontSize = 14.sp
+                )
+            }
+            authState?.let {
+                if (it != "SUCCESS") {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = it, color = MaterialTheme.colorScheme.error)
+                }
             }
         }
     }

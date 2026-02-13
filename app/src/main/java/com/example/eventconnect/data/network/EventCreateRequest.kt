@@ -7,5 +7,11 @@ data class EventCreateRequest(
     val duration_hours: Int,
     val meal_style: String,
     val location_type: String,
-    val season: String
+    val season: String,
+
+    val address: String,
+    val city: String,
+    val pincode: String,
+    val latitude: Double,
+    val longitude: Double
 )

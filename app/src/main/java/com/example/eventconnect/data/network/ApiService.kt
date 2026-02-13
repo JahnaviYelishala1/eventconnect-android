@@ -141,47 +141,6 @@ interface ApiService {
         @Part file: MultipartBody.Part
     ): Response<ImageUploadResponse>
 
-    // ---------------- CATERER MATCH ----------------
-
-    @GET("api/caterers/match/{eventId}")
-    suspend fun getMatchingCaterers(
-        @Header("Authorization") token: String,
-        @Path("eventId") eventId: Int,
-        @Query("min_price") minPrice: Double?,
-        @Query("max_price") maxPrice: Double?,
-        @Query("min_rating") minRating: Double?,
-        @Query("veg_only") vegOnly: Boolean?,
-        @Query("nonveg_only") nonVegOnly: Boolean?,
-        @Query("sort_by") sortBy: String?
-    ): Response<List<CatererResponse>>
-
-
-    @POST("api/caterers/book/{eventId}/{catererId}")
-    suspend fun bookCaterer(
-        @Header("Authorization") token: String,
-        @Path("eventId") eventId: Int,
-        @Path("catererId") catererId: Int
-    ): Response<Map<String, String>>
-
-    @GET("api/bookings/caterer-requests")
-    suspend fun getCatererBookings(
-        @Header("Authorization") token: String
-    ): Response<List<BookingResponse>>
-
-
-    @PATCH("api/bookings/respond/{bookingId}")
-    suspend fun respondBooking(
-        @Header("Authorization") token: String,
-        @Path("bookingId") bookingId: Int,
-        @Query("status") status: String
-    ): Response<Map<String, String>>
-
-    @GET("api/bookings/event/{eventId}")
-    suspend fun getEventBookingStatus(
-        @Header("Authorization") token: String,
-        @Path("eventId") eventId: Int
-    ): Response<EventBookingStatusResponse>
-
     @GET("api/caterers/profile")
     suspend fun getCatererProfile(
         @Header("Authorization") token: String
@@ -206,18 +165,50 @@ interface ApiService {
         @Part file: MultipartBody.Part
     ): Response<ImageUploadResponse>
 
-    @POST("api/caterers/{catererId}/rate")
-    suspend fun rateCaterer(
-        @Header("Authorization") token: String,
-        @Path("catererId") catererId: Int,
-        @Body request: RatingRequest
-    ): Response<Map<String, String>>
+    // ---------------- ORGANIZER PROFILE ----------------
 
-    @GET("api/caterers/{catererId}/reviews")
-    suspend fun getCatererReviews(
+    @GET("api/organizers/profile")
+    suspend fun getOrganizerProfile(
+        @Header("Authorization") token: String
+    ): Response<OrganizerProfileResponse?>
+
+    @POST("api/organizers/profile")
+    suspend fun createOrganizerProfile(
         @Header("Authorization") token: String,
-        @Path("catererId") catererId: Int
-    ): Response<List<ReviewResponse>>
+        @Body request: OrganizerProfileRequest
+    ): Response<ApiMessage>
+
+    @PUT("api/organizers/profile")
+    suspend fun updateOrganizerProfile(
+        @Header("Authorization") token: String,
+        @Body request: OrganizerProfileRequest
+    ): Response<ApiMessage>
+
+    @Multipart
+    @POST("api/organizers/upload-image")
+    suspend fun uploadOrganizerImage(
+        @Header("Authorization") token: String,
+        @Part file: MultipartBody.Part
+    ): Response<ImageUploadResponse>
+
+    @GET("api/caterers/match/{eventId}")
+    suspend fun matchCaterers(
+        @Header("Authorization") token: String,
+        @Path("eventId") eventId: Int,
+        @Query("veg_only") vegOnly: Boolean? = null,
+        @Query("nonveg_only") nonVegOnly: Boolean? = null,
+        @Query("min_price") minPrice: Double? = null,
+        @Query("max_price") maxPrice: Double? = null,
+        @Query("meal_style") mealStyle: String? = null
+    ): Response<List<CatererResponse>>
+
+
+    @GET("api/bookings/event/{eventId}")
+    suspend fun getEventBookingStatus(
+        @Header("Authorization") token: String,
+        @Path("eventId") eventId: Int
+    ): Response<EventBookingStatusResponse>
+
 
 
 }

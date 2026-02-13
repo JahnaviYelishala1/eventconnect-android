@@ -8,6 +8,7 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class FindCatererViewModel : ViewModel() {
 
@@ -15,90 +16,55 @@ class FindCatererViewModel : ViewModel() {
         MutableStateFlow<List<CatererResponse>>(emptyList())
     val caterers: StateFlow<List<CatererResponse>> = _caterers
 
-    private val _error =
-        MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error
-
-    private val _loading =
-        MutableStateFlow(false)
+    private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
 
     fun loadCaterers(
         eventId: Int,
-        minPrice: Double? = null,
-        maxPrice: Double? = null,
-        minRating: Double? = null,
         vegOnly: Boolean? = null,
         nonVegOnly: Boolean? = null,
-        sortBy: String? = null
+        minPrice: Double? = null,
+        maxPrice: Double? = null,
+        mealStyle: String? = null
     ) {
         viewModelScope.launch {
+
             try {
                 _loading.value = true
                 _error.value = null
 
-                val token = FirebaseAuth.getInstance()
-                    .currentUser
-                    ?.getIdToken(false)
-                    ?.result
-                    ?.token ?: return@launch
+                val user = FirebaseAuth.getInstance().currentUser
+                    ?: return@launch
+
+                val token =
+                    user.getIdToken(false).await().token
+                        ?: return@launch
 
                 val response =
-                    RetrofitClient.apiService
-                        .getMatchingCaterers(
-                            "Bearer $token",
-                            eventId,
-                            minPrice,
-                            maxPrice,
-                            minRating,
-                            vegOnly,
-                            nonVegOnly,
-                            sortBy
-                        )
+                    RetrofitClient.apiService.matchCaterers(
+                        token = "Bearer $token",
+                        eventId = eventId,
+                        vegOnly = vegOnly,
+                        nonVegOnly = nonVegOnly,
+                        minPrice = minPrice,
+                        maxPrice = maxPrice,
+                        mealStyle = mealStyle
+                    )
 
                 if (response.isSuccessful) {
-                    _caterers.value = response.body() ?: emptyList()
+                    _caterers.value =
+                        response.body() ?: emptyList()
                 } else {
-                    _error.value = "Failed to load caterers"
+                    _error.value = "Error ${response.code()}"
                 }
 
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = e.localizedMessage
             } finally {
                 _loading.value = false
-            }
-        }
-    }
-
-    fun bookCaterer(
-        eventId: Int,
-        catererId: Int,
-        onSuccess: () -> Unit
-    ) {
-        viewModelScope.launch {
-            try {
-                val token = FirebaseAuth.getInstance()
-                    .currentUser
-                    ?.getIdToken(false)
-                    ?.result
-                    ?.token ?: return@launch
-
-                val response =
-                    RetrofitClient.apiService
-                        .bookCaterer(
-                            "Bearer $token",
-                            eventId,
-                            catererId
-                        )
-
-                if (response.isSuccessful) {
-                    onSuccess()
-                } else {
-                    _error.value = "Booking failed"
-                }
-
-            } catch (e: Exception) {
-                _error.value = e.message
             }
         }
     }

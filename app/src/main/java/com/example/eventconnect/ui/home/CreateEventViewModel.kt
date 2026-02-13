@@ -9,6 +9,7 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class CreateEventViewModel : ViewModel() {
 
@@ -21,119 +22,68 @@ class CreateEventViewModel : ViewModel() {
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading
 
-    // ------------------ STEP 1: PREDICT FOOD ------------------
-    fun estimateFood(
-        eventType: String,
-        guests: String,
-        duration: String,
-        mealStyle: String,
-        location: String,
-        season: String
-    ) {
-        if (
-            eventType.isBlank() || guests.isBlank() || duration.isBlank() ||
-            mealStyle.isBlank() || location.isBlank() || season.isBlank()
-        ) {
-            _error.value = "Please fill all fields"
-            return
-        }
-
-        val guestsInt = guests.toIntOrNull()
-        val durationInt = duration.toIntOrNull()
-
-        if (guestsInt == null || durationInt == null) {
-            _error.value = "Guests and duration must be numbers"
-            return
-        }
-
-        viewModelScope.launch {
-            try {
-                _loading.value = true
-                _error.value = null
-
-                val token = FirebaseAuth.getInstance()
-                    .currentUser
-                    ?.getIdToken(false)
-                    ?.result
-                    ?.token ?: run {
-                    _error.value = "User not authenticated"
-                    return@launch
-                }
-
-                val response = RetrofitClient.apiService.predictFood(
-                    token = "Bearer $token",
-                    request = FoodPredictionRequest(
-                        event_type = eventType,
-                        attendees = guestsInt,
-                        duration_hours = durationInt,
-                        meal_style = mealStyle,
-                        location_type = location,
-                        season = season
-                    )
-                )
-
-                if (response.isSuccessful) {
-                    val result = response.body()
-                    _prediction.value =
-                        "Estimated food required: ${result?.estimated_food_quantity} ${result?.unit}"
-                } else {
-                    _error.value = "Prediction failed (${response.code()})"
-                }
-
-            } catch (e: Exception) {
-                _error.value = e.message
-            } finally {
-                _loading.value = false
-            }
-        }
+    fun setError(message: String) {
+        _error.value = message
     }
 
-    // ------------------ STEP 2: SAVE EVENT (DB INSERT) ------------------
     fun saveEvent(
         eventName: String,
         eventType: String,
         guests: Int,
         duration: Int,
         mealStyle: String,
-        location: String,
-        season: String
+        locationType: String,
+        season: String,
+        address: String,
+        city: String,
+        pincode: String,
+        latitude: Double,
+        longitude: Double
     ) {
         viewModelScope.launch {
             try {
                 _loading.value = true
                 _error.value = null
 
-                val token = FirebaseAuth.getInstance()
-                    .currentUser
-                    ?.getIdToken(false)
-                    ?.result
-                    ?.token ?: run {
-                    _error.value = "User not authenticated"
-                    return@launch
-                }
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                    ?: run {
+                        _error.value = "User not logged in"
+                        return@launch
+                    }
+
+                val token = currentUser.getIdToken(false).await().token
+                    ?: run {
+                        _error.value = "Failed to get auth token"
+                        return@launch
+                    }
 
                 val response = RetrofitClient.apiService.createEvent(
-                    token = "Bearer $token",
-                    request = EventCreateRequest(
+                    "Bearer $token",
+                    EventCreateRequest(
                         event_name = eventName,
                         event_type = eventType,
                         attendees = guests,
                         duration_hours = duration,
                         meal_style = mealStyle,
-                        location_type = location,
-                        season = season
+                        location_type = locationType,
+                        season = season,
+                        address = address,
+                        city = city,
+                        pincode = pincode,
+                        latitude = latitude,
+                        longitude = longitude
                     )
                 )
 
                 if (response.isSuccessful) {
-                    _prediction.value =
-                        "Event saved successfully 🎉"
+                    _prediction.value = "Event saved successfully 🎉"
                 } else {
-                    _error.value = "Failed to save event (${response.code()})"
+                    _error.value =
+                        "Failed (${response.code()}): ${response.errorBody()?.string()}"
                 }
 
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = e.localizedMessage ?: "Unknown error"
             } finally {
                 _loading.value = false
             }

@@ -24,7 +24,6 @@ fun MyEventsScreen(
 
     val events by viewModel.events.collectAsState()
     val error by viewModel.error.collectAsState()
-    val bookingInfo by viewModel.bookingInfo.collectAsState()
 
     var showCompleteSheet by remember { mutableStateOf(false) }
     var selectedEventId by remember { mutableStateOf<Int?>(null) }
@@ -36,14 +35,7 @@ fun MyEventsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My Events") },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        navController.popBackStack()
-                    }) {
-                        Icon(Icons.Default.ArrowBack, null)
-                    }
-                }
+                title = { Text("My Events") }
             )
         }
     ) { padding ->
@@ -51,9 +43,7 @@ fun MyEventsScreen(
         when {
             error != null -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
+                    Modifier.fillMaxSize().padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(error!!,
@@ -63,9 +53,7 @@ fun MyEventsScreen(
 
             events.isEmpty() -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
+                    Modifier.fillMaxSize().padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
                     Text("No events created yet")
@@ -74,20 +62,14 @@ fun MyEventsScreen(
 
             else -> {
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
+                    Modifier.fillMaxSize().padding(padding),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement =
-                        Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(events) { event ->
-
                         EventCard(
                             navController = navController,
                             event = event,
-                            bookingInfo =
-                                bookingInfo[event.id],
                             onCompleteClick = {
                                 selectedEventId = event.id
                                 showCompleteSheet = true
@@ -114,13 +96,10 @@ fun MyEventsScreen(
         )
     }
 }
-
-
 @Composable
 fun EventCard(
     navController: NavController,
     event: EventResponse,
-    bookingInfo: EventBookingStatusResponse?,
     onCompleteClick: () -> Unit
 ) {
 
@@ -132,9 +111,8 @@ fun EventCard(
         elevation = CardDefaults.cardElevation(6.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement =
-                Arrangement.spacedBy(12.dp)
+            Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
             Text(event.event_name,
@@ -145,16 +123,10 @@ fun EventCard(
                 label = { Text(event.status.replace("_", " ")) }
             )
 
-            // 🔥 Show Caterer Name if booked
-            bookingInfo?.caterer_name?.let {
-                Text("Caterer: $it",
-                    style = MaterialTheme.typography.bodyMedium)
-            }
-
             Divider()
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                Modifier.fillMaxWidth(),
                 horizontalArrangement =
                     Arrangement.SpaceBetween
             ) {
@@ -172,9 +144,7 @@ fun EventCard(
                 shape = MaterialTheme.shapes.large
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp),
+                    Modifier.fillMaxWidth().padding(14.dp),
                     horizontalArrangement =
                         Arrangement.SpaceBetween
                 ) {
@@ -183,82 +153,24 @@ fun EventCard(
                 }
             }
 
-            when (event.status) {
+            if (event.status == "CREATED") {
 
-                "CREATED" -> {
-                    Column(
-                        verticalArrangement =
-                            Arrangement.spacedBy(8.dp)
-                    ) {
-                        Button(
-                            onClick = onCompleteClick,
-                            modifier =
-                                Modifier.fillMaxWidth()
-                        ) {
-                            Text("Complete Event")
-                        }
-
-                        Button(
-                            onClick = {
-                                navController.navigate(
-                                    "find-caterer/${event.id}"
-                                )
-                            },
-                            modifier =
-                                Modifier.fillMaxWidth()
-                        ) {
-                            Text("Find Caterer")
-                        }
-                    }
+                Button(
+                    onClick = onCompleteClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Complete Event")
                 }
 
-                "BOOKING_REQUESTED" -> {
-                    AssistChip(
-                        onClick = {},
-                        label = {
-                            Text("Waiting for Caterer Response")
-                        }
-                    )
-                }
-
-                "BOOKED" -> {
-                    Column(
-                        verticalArrangement =
-                            Arrangement.spacedBy(8.dp)
-                    ) {
-                        AssistChip(
-                            onClick = {},
-                            label = {
-                                Text("Caterer Confirmed")
-                            }
+                Button(
+                    onClick = {
+                        navController.navigate(
+                            "find_caterer/${event.id}?mealStyle=${event.meal_style}&foodType=Both"
                         )
-
-                        Button(
-                            onClick = onCompleteClick,
-                            modifier =
-                                Modifier.fillMaxWidth()
-                        ) {
-                            Text("Complete Event")
-                        }
-                    }
-                }
-
-                "SURPLUS_AVAILABLE" -> {
-                    AssistChip(
-                        onClick = {},
-                        label = {
-                            Text("Surplus Available")
-                        }
-                    )
-                }
-
-                "COMPLETED" -> {
-                    AssistChip(
-                        onClick = {},
-                        label = {
-                            Text("Event Completed")
-                        }
-                    )
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Find Caterer")
                 }
             }
         }

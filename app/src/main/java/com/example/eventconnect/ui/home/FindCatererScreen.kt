@@ -1,50 +1,52 @@
 package com.example.eventconnect.ui.home
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
-import com.example.eventconnect.data.network.CatererResponse
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun FindCatererScreen(
     navController: NavController,
     eventId: Int,
-    viewModel: FindCatererViewModel = viewModel()
+    viewModel: FindCatererViewModel = viewModel(),
+    defaultMealStyle: String = "Buffet",
+    defaultFoodType: String = "Both"
 ) {
 
     val caterers by viewModel.caterers.collectAsState()
     val loading by viewModel.loading.collectAsState()
-    val error by viewModel.error.collectAsState()
 
-    var showFilter by remember { mutableStateOf(false) }
+    var step by remember { mutableStateOf(1) }
+    var selectedFoodType by remember { mutableStateOf(defaultFoodType) }
+    var selectedMealStyle by remember { mutableStateOf(defaultMealStyle) }
+    var priceRange by remember { mutableStateOf(500f..2000f) }
 
-    LaunchedEffect(Unit) {
+    // ✅ Initial Load
+    LaunchedEffect(eventId) {
         viewModel.loadCaterers(eventId)
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Find Caterers") },
-                navigationIcon = {
-                    IconButton(
-                        onClick = { navController.popBackStack() }
-                    ) {
-                        Icon(Icons.Default.ArrowBack, null)
-                    }
-                }
-            )
+            TopAppBar(title = { Text("Matching Caterers") })
         }
     ) { padding ->
 
@@ -52,165 +54,300 @@ fun FindCatererScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+            /* ---------------- FILTER CARD ---------------- */
+
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFAAB19C)
+                ),
+                modifier = Modifier.fillMaxWidth()
             ) {
 
-                AssistChip(
-                    onClick = { showFilter = true },
-                    label = { Text("Filters") }
-                )
-
-                AssistChip(
-                    onClick = {
-                        viewModel.loadCaterers(
-                            eventId = eventId,
-                            sortBy = "price_low"
+                AnimatedContent(
+                    targetState = step,
+                    transitionSpec = {
+                        slideInHorizontally(
+                            initialOffsetX = { fullWidth -> fullWidth },
+                            animationSpec = tween(300)
+                        ).togetherWith(
+                            slideOutHorizontally(
+                                targetOffsetX = { fullWidth -> -fullWidth },
+                                animationSpec = tween(300)
+                            )
                         )
                     },
-                    label = { Text("Price ↑") }
-                )
+                    label = "FilterAnimation"
+                ) { currentStep ->
 
-                AssistChip(
-                    onClick = {
-                        viewModel.loadCaterers(
-                            eventId = eventId,
-                            sortBy = "price_high"
-                        )
-                    },
-                    label = { Text("Price ↓") }
-                )
+                    when (currentStep) {
+
+                        /* ---------------- STEP 1 ---------------- */
+                        1 -> FilterStep1(
+                            selectedFoodType = selectedFoodType
+                        ) {
+                            selectedFoodType = it
+                            step = 2
+                        }
+
+                        /* ---------------- STEP 2 ---------------- */
+                        2 -> FilterStep2(
+                            selectedMealStyle = selectedMealStyle
+                        ) {
+                            selectedMealStyle = it
+                            step = 3
+                        }
+
+                        /* ---------------- STEP 3 ---------------- */
+                        3 -> FilterStep3(
+                            priceRange = priceRange,
+                            onRangeChanged = { priceRange = it }
+                        ) {
+                            viewModel.loadCaterers(
+                                eventId = eventId,
+                                vegOnly = if (selectedFoodType == "Veg") true else null,
+                                nonVegOnly = if (selectedFoodType == "Non-Veg") true else null,
+                                minPrice = priceRange.start.toDouble(),
+                                maxPrice = priceRange.endInclusive.toDouble(),
+                                mealStyle = selectedMealStyle
+                            )
+                        }
+                    }
+                }
             }
 
-            when {
+            Spacer(Modifier.height(24.dp))
 
-                loading -> {
-                    Box(
-                        Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
+            /* ---------------- RESULTS ---------------- */
 
-                error != null -> {
-                    Box(
-                        Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            error!!,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
+            Text(
+                text = "Caterers Found: ${caterers.size}",
+                style = MaterialTheme.typography.titleMedium
+            )
 
-                caterers.isEmpty() -> {
-                    Box(
-                        Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("No caterers found")
-                    }
-                }
+            Spacer(Modifier.height(8.dp))
 
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement =
-                            Arrangement.spacedBy(16.dp)
+            if (loading) {
+                CircularProgressIndicator()
+            } else {
+                caterers.forEach { caterer ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        elevation = CardDefaults.cardElevation(4.dp)
                     ) {
-                        items(caterers) { caterer ->
-                            PremiumCatererCard(
-                                caterer = caterer,
-                                onBookClick = {
-                                    viewModel.bookCaterer(
-                                        eventId,
-                                        caterer.id
-                                    ) {
-                                        navController.popBackStack()
-                                    }
-                                }
+                        Column(
+                            Modifier.padding(16.dp)
+                        ) {
+                            Text(
+                                text = caterer.business_name,
+                                style = MaterialTheme.typography.titleMedium
                             )
+                            Text("₹${caterer.price_per_plate}")
+                            Text("⭐ ${caterer.rating}")
+                            Text("${caterer.distance_km} km away")
                         }
                     }
                 }
             }
         }
     }
+}
 
-    if (showFilter) {
-        FilterBottomSheet(
-            onApply = { min, max, rating ->
-                viewModel.loadCaterers(
-                    eventId = eventId,
-                    minPrice = min,
-                    maxPrice = max,
-                    minRating = rating
-                )
-            },
-            onDismiss = { showFilter = false }
+/* ---------------------------------------------------- */
+/* ---------------- FILTER STEPS ---------------------- */
+/* ---------------------------------------------------- */
+
+/* ---------------------------------------------------- */
+/* ---------------- FILTER STEP 1 --------------------- */
+/* ---------------------------------------------------- */
+
+@Composable
+private fun FilterStep1(
+    selectedFoodType: String,
+    onSelect: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Text(
+            text = "Select Food Preference",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
         )
+
+        Spacer(Modifier.height(20.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            FoodOptionCard(
+                title = "Veg",
+                selected = selectedFoodType == "Veg",
+                onClick = { onSelect("Veg") }
+            )
+
+            FoodOptionCard(
+                title = "Non-Veg",
+                selected = selectedFoodType == "Non-Veg",
+                onClick = { onSelect("Non-Veg") }
+            )
+
+            FoodOptionCard(
+                title = "Both",
+                selected = selectedFoodType == "Both",
+                onClick = { onSelect("Both") }
+            )
+        }
     }
 }
 
+/* ---------------------------------------------------- */
+/* ---------------- FILTER STEP 2 --------------------- */
+/* ---------------------------------------------------- */
+
 @Composable
-fun PremiumCatererCard(
-    caterer: CatererResponse,
-    onBookClick: () -> Unit
+private fun FilterStep2(
+    selectedMealStyle: String,
+    onSelect: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Text(
+            text = "Select Meal Style",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(Modifier.height(20.dp))
+
+        listOf(
+            "Buffet",
+            "Live Cooking",
+            "Snacks",
+            "Packed Meals"
+        ).forEach { style ->
+
+            FoodOptionCard(
+                title = style,
+                selected = selectedMealStyle == style,
+                onClick = { onSelect(style) }
+            )
+
+            Spacer(Modifier.height(12.dp))
+        }
+    }
+}
+
+/* ---------------------------------------------------- */
+/* ---------------- FILTER STEP 3 --------------------- */
+/* ---------------------------------------------------- */
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FilterStep3(
+    priceRange: ClosedFloatingPointRange<Float>,
+    onRangeChanged: (ClosedFloatingPointRange<Float>) -> Unit,
+    onApply: () -> Unit
+) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Text(
+            text = "Price Per Plate",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        RangeSlider(
+            value = priceRange,
+            onValueChange = {
+                onRangeChanged(
+                    it.start.toInt().toFloat()..
+                            it.endInclusive.toInt().toFloat()
+                )
+            },
+            valueRange = 0f..10000f,
+            steps = 19
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = "₹${priceRange.start.toInt()} - ₹${priceRange.endInclusive.toInt()}",
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        Spacer(Modifier.height(20.dp))
+
+        Button(
+            onClick = onApply,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Apply Filters")
+        }
+    }
+}
+
+/* ---------------------------------------------------- */
+/* ---------------- OPTION CARD ----------------------- */
+/* ---------------------------------------------------- */
+
+@Composable
+fun FoodOptionCard(
+    title: String,
+    selected: Boolean,
+    onClick: () -> Unit
 ) {
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(8.dp)
+        modifier = Modifier
+            .size(width = 110.dp, height = 70.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor =
+                if (selected) Color(0xFF6B7C6F)
+                else Color(0xFFEDEDED)
+        )
     ) {
-        Column {
 
-            AsyncImage(
-                model = caterer.image_url
-                    ?: "https://via.placeholder.com/600x300",
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp)
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+
+            Text(
+                text = title,
+                fontWeight = FontWeight.Medium,
+                color = if (selected) Color.White else Color.Black
             )
-
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-
-                Text(
-                    caterer.business_name,
-                    style = MaterialTheme.typography.titleLarge
-                )
-
-                Row(
-                    horizontalArrangement =
-                        Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("₹${caterer.price_per_plate}/plate")
-                    Text("⭐ ${caterer.rating}")
-                }
-
-                caterer.distance_km?.let {
-                    Text("📍 ${it} km away")
-                }
-
-                Button(
-                    onClick = onBookClick,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Book Now")
-                }
-            }
         }
     }
 }
