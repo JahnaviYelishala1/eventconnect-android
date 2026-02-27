@@ -209,6 +209,52 @@ interface ApiService {
         @Path("eventId") eventId: Int
     ): Response<EventBookingStatusResponse>
 
+    @GET("api/menus/{catererId}")
+    suspend fun getCatererMenu(
+        @Header("Authorization") token: String,
+        @Path("catererId") catererId: Int
+    ): Response<List<MenuResponse>>
 
+    @POST("api/bookings/request")
+    suspend fun createBooking(
+        @Header("Authorization") token: String,
+        @Body request: BookingCreateRequest
+    ): Response<BookingResponse>
+
+    @GET("api/bookings/caterer")
+    suspend fun getCatererBookings(
+        @Header("Authorization") token: String
+    ): Response<List<BookingResponse>>
+
+    @PUT("api/bookings/{bookingId}/status")
+    suspend fun updateBookingStatus(
+        @Header("Authorization") token: String,
+        @Path("bookingId") bookingId: Int,
+        @Query("status") status: String
+    ): Response<Map<String, String>>
+
+    @GET("api/menus/me")
+    suspend fun getMyMenu(
+        @Header("Authorization") token: String
+    ): Response<List<MenuResponse>>
+
+    @POST("api/menus/")
+    suspend fun createMenu(
+        @Header("Authorization") token: String,
+        @Body request: MenuCreateRequest
+    ): Response<MenuResponse>
+
+    @PUT("api/menus/{menuId}")
+    suspend fun updateMenu(
+        @Header("Authorization") token: String,
+        @Path("menuId") menuId: Int,
+        @Body request: MenuCreateRequest
+    ): Response<MenuResponse>
+
+    @DELETE("api/menus/{menuId}")
+    suspend fun deleteMenu(
+        @Header("Authorization") token: String,
+        @Path("menuId") menuId: Int
+    ): Response<Map<String,String>>
 
 }

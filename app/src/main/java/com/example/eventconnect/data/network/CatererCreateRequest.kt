@@ -11,5 +11,6 @@ data class CatererCreateRequest(
     val latitude: Double,
     val longitude: Double,
     val services: List<String>,
+    val meal_styles: List<String>,
     val image_url: String?
 )

@@ -2,13 +2,9 @@ package com.example.eventconnect.ui.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavType
@@ -19,6 +15,7 @@ import com.example.eventconnect.ui.home.*
 import com.example.eventconnect.ui.admin.AdminNgoReviewScreen
 import com.example.eventconnect.ui.ngo.*
 import com.example.eventconnect.ui.profile.*
+import com.google.firebase.auth.FirebaseAuth
 
 /* -------------------------------------------------- */
 /* ---------------- BOTTOM NAV ITEMS ---------------- */
@@ -113,9 +110,7 @@ fun NavGraph() {
                             NavigationBarItem(
                                 selected = currentRoute == item.route,
                                 onClick = { navigateTo(item.route) },
-                                icon = {
-                                    Icon(item.icon, contentDescription = item.label)
-                                },
+                                icon = { Icon(item.icon, null) },
                                 label = { Text(item.label) }
                             )
                         }
@@ -126,20 +121,39 @@ fun NavGraph() {
 
                 currentRoute in catererRoutes -> {
                     NavigationBar {
-                        listOf(
-                            BottomNavItem.CatererHome,
-                            BottomNavItem.CatererBookings,
-                            BottomNavItem.CatererProfile
-                        ).forEach { item ->
-                            NavigationBarItem(
-                                selected = currentRoute == item.route,
-                                onClick = { navigateTo(item.route) },
-                                icon = {
-                                    Icon(item.icon, contentDescription = item.label)
-                                },
-                                label = { Text(item.label) }
-                            )
-                        }
+
+                        NavigationBarItem(
+                            selected = currentRoute == BottomNavItem.CatererHome.route,
+                            onClick = { navigateTo(BottomNavItem.CatererHome.route) },
+                            icon = { Icon(Icons.Default.Home, null) },
+                            label = { Text("Home") }
+                        )
+
+                        NavigationBarItem(
+                            selected = currentRoute == BottomNavItem.CatererBookings.route,
+                            onClick = { navigateTo(BottomNavItem.CatererBookings.route) },
+                            icon = { Icon(Icons.Default.List, null) },
+                            label = { Text("Bookings") }
+                        )
+
+                        NavigationBarItem(
+                            selected = currentRoute == BottomNavItem.CatererProfile.route,
+                            onClick = { navigateTo(BottomNavItem.CatererProfile.route) },
+                            icon = { Icon(Icons.Default.AccountCircle, null) },
+                            label = { Text("Profile") }
+                        )
+
+                        NavigationBarItem(
+                            selected = false,
+                            onClick = {
+                                FirebaseAuth.getInstance().signOut()
+                                navController.navigate("login") {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            },
+                            icon = { Icon(Icons.Default.ExitToApp, null) },
+                            label = { Text("Logout") }
+                        )
                     }
                 }
 
@@ -154,9 +168,7 @@ fun NavGraph() {
                             NavigationBarItem(
                                 selected = currentRoute == item.route,
                                 onClick = { navigateTo(item.route) },
-                                icon = {
-                                    Icon(item.icon, contentDescription = item.label)
-                                },
+                                icon = { Icon(item.icon, null) },
                                 label = { Text(item.label) }
                             )
                         }
@@ -189,9 +201,7 @@ fun NavGraph() {
 
             composable("signup") {
                 SignupScreen(
-                    onNavigateToLogin = {
-                        navController.popBackStack()
-                    },
+                    onNavigateToLogin = { navController.popBackStack() },
                     onSignupSuccess = {
                         navController.navigate("home-gate") {
                             popUpTo("signup") { inclusive = true }
@@ -208,7 +218,7 @@ fun NavGraph() {
                 RoleSelectionScreen(navController)
             }
 
-            /* ---------------- ORGANIZER FLOW ---------------- */
+            /* ---------------- ORGANIZER ---------------- */
 
             composable(BottomNavItem.OrganizerHome.route) {
                 OrganizerHomeScreen(navController)
@@ -222,50 +232,11 @@ fun NavGraph() {
                 CreateEventScreen(navController)
             }
 
-            composable(
-                route = "find_caterer/{eventId}?mealStyle={mealStyle}&foodType={foodType}",
-                arguments = listOf(
-                    navArgument("eventId") {
-                        type = NavType.IntType
-                    },
-                    navArgument("mealStyle") {
-                        type = NavType.StringType
-                        defaultValue = "Buffet"
-                        nullable = true
-                    },
-                    navArgument("foodType") {
-                        type = NavType.StringType
-                        defaultValue = "Both"
-                        nullable = true
-                    }
-                )
-            ) { backStackEntry ->
-
-                val eventId =
-                    backStackEntry.arguments?.getInt("eventId") ?: 0
-
-                val mealStyle =
-                    backStackEntry.arguments?.getString("mealStyle") ?: "Buffet"
-
-                val foodType =
-                    backStackEntry.arguments?.getString("foodType") ?: "Both"
-
-                FindCatererScreen(
-                    navController = navController,
-                    eventId = eventId,
-                    defaultMealStyle = mealStyle,
-                    defaultFoodType = foodType
-                )
-            }
-
-
-
-
             composable(BottomNavItem.OrganizerProfile.route) {
                 OrganizerProfileScreen(navController)
             }
 
-            /* ---------------- CATERER FLOW ---------------- */
+            /* ---------------- CATERER ---------------- */
 
             composable(BottomNavItem.CatererHome.route) {
                 CatererHomeScreen(navController)
@@ -276,11 +247,7 @@ fun NavGraph() {
                 CatererProfileScreen(navController)
             }
 
-            composable("create-caterer-profile") {
-                CatererProfileScreen(navController)
-            }
-
-            /* ---------------- NGO FLOW ---------------- */
+            /* ---------------- NGO ---------------- */
 
             composable(BottomNavItem.NgoHome.route) {
                 NgoHomeScreen(navController)

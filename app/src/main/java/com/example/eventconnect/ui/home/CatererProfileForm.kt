@@ -67,7 +67,22 @@ fun CatererProfileForm(
 
     val selectedServices = remember {
         mutableStateListOf<String>().apply {
-            existing?.services?.let { addAll(it) }
+            existing?.services?.let { services ->
+                addAll(services.map { it.service_type })
+            }
+        }
+    }
+
+    val availableMealStyles = listOf(
+        "Buffet",
+        "Live Cooking",
+        "Snacks",
+        "Packed Meals"
+    )
+
+    val selectedMealStyles = remember {
+        mutableStateListOf<String>().apply {
+            existing?.meal_styles?.let { addAll(it) }
         }
     }
 
@@ -331,6 +346,33 @@ fun CatererProfileForm(
                         }
                     }
                 }
+                // Meal Style Chips
+                Text(
+                    "Meal Styles",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = DarkText
+                    ),
+                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    availableMealStyles.forEach { mealStyle ->
+                        FilterChip(
+                            selected = selectedMealStyles.contains(mealStyle),
+                            onClick = {
+                                if (selectedMealStyles.contains(mealStyle)) {
+                                    selectedMealStyles.remove(mealStyle)
+                                } else {
+                                    selectedMealStyles.add(mealStyle)
+                                }
+                            },
+                            label = { Text(mealStyle) }
+                        )
+                    }
+                }
             }
         }
 
@@ -364,6 +406,7 @@ fun CatererProfileForm(
                         latitude = latitude!!,
                         longitude = longitude!!,
                         services = selectedServices,
+                        meal_styles = selectedMealStyles, // <-- Pass meal styles
                         image_url = imageUrl ?: ""
                     ),
                     selectedImageUri
@@ -378,5 +421,28 @@ fun CatererProfileForm(
         }
 
         Spacer(Modifier.height(30.dp))
+
+        // ============ PROFILE DISPLAY ============
+        if (existing != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Meal Styles:", fontWeight = FontWeight.Bold, color = SageGreen)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        existing.meal_styles?.forEach { style ->
+                            AssistChip(onClick = {}, label = { Text(style) })
+                        }
+                    }
+                }
+            }
+        }
     }
 }

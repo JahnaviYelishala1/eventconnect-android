@@ -13,6 +13,8 @@ data class CatererProfileResponse(
     val rating: Double,
     val latitude: Double?,
     val longitude: Double?,
-    val services: List<String>   // ✅ ADD THIS
+    val services: List<CatererServiceResponse>,
+    val meal_styles: List<String> // ✅ ADD THIS
 )
+
 

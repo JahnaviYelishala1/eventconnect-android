@@ -160,14 +160,6 @@ fun FindCatererScreen(
     }
 }
 
-/* ---------------------------------------------------- */
-/* ---------------- FILTER STEPS ---------------------- */
-/* ---------------------------------------------------- */
-
-/* ---------------------------------------------------- */
-/* ---------------- FILTER STEP 1 --------------------- */
-/* ---------------------------------------------------- */
-
 @Composable
 private fun FilterStep1(
     selectedFoodType: String,
@@ -214,11 +206,6 @@ private fun FilterStep1(
         }
     }
 }
-
-/* ---------------------------------------------------- */
-/* ---------------- FILTER STEP 2 --------------------- */
-/* ---------------------------------------------------- */
-
 @Composable
 private fun FilterStep2(
     selectedMealStyle: String,
@@ -257,10 +244,6 @@ private fun FilterStep2(
     }
 }
 
-/* ---------------------------------------------------- */
-/* ---------------- FILTER STEP 3 --------------------- */
-/* ---------------------------------------------------- */
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FilterStep3(
@@ -268,7 +251,6 @@ private fun FilterStep3(
     onRangeChanged: (ClosedFloatingPointRange<Float>) -> Unit,
     onApply: () -> Unit
 ) {
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -281,9 +263,7 @@ private fun FilterStep3(
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
-
         Spacer(Modifier.height(16.dp))
-
         RangeSlider(
             value = priceRange,
             onValueChange = {
@@ -295,16 +275,12 @@ private fun FilterStep3(
             valueRange = 0f..10000f,
             steps = 19
         )
-
         Spacer(Modifier.height(8.dp))
-
         Text(
             text = "₹${priceRange.start.toInt()} - ₹${priceRange.endInclusive.toInt()}",
             style = MaterialTheme.typography.bodyMedium
         )
-
         Spacer(Modifier.height(20.dp))
-
         Button(
             onClick = onApply,
             modifier = Modifier.fillMaxWidth()
@@ -313,10 +289,6 @@ private fun FilterStep3(
         }
     }
 }
-
-/* ---------------------------------------------------- */
-/* ---------------- OPTION CARD ----------------------- */
-/* ---------------------------------------------------- */
 
 @Composable
 fun FoodOptionCard(
@@ -337,12 +309,10 @@ fun FoodOptionCard(
                 else Color(0xFFEDEDED)
         )
     ) {
-
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.fillMaxSize()
         ) {
-
             Text(
                 text = title,
                 fontWeight = FontWeight.Medium,
