@@ -2,14 +2,16 @@ package com.example.eventconnect.ui.booking
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.eventconnect.data.network.*
+import com.example.eventconnect.data.network.BookingResponse   // ✅ REQUIRED
+import com.example.eventconnect.data.network.RetrofitClient
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import retrofit2.Response
 
-class CatererBookingsViewModel : ViewModel() {
+class OrganizerBookingsViewModel : ViewModel() {
 
     private val _bookings =
         MutableStateFlow<List<BookingResponse>>(emptyList())
@@ -25,43 +27,30 @@ class CatererBookingsViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 _loading.value = true
-                val user = FirebaseAuth.getInstance().currentUser!!
-                val token = user.getIdToken(false).await().token!!
+                _error.value = null
 
-                val response =
-                    RetrofitClient.apiService.getCatererBookings(
+                val user = FirebaseAuth.getInstance().currentUser
+                    ?: throw Exception("User not logged in")
+
+                val token = user.getIdToken(false).await().token
+                    ?: throw Exception("Failed to get token")
+
+                val response: Response<List<BookingResponse>> =
+                    RetrofitClient.apiService.getOrganizerBookings(
                         "Bearer $token"
                     )
 
                 if (response.isSuccessful) {
                     _bookings.value = response.body() ?: emptyList()
                 } else {
-                    _error.value = "Failed to load bookings"
+                    _error.value = "Error: ${response.code()}"
                 }
 
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = e.localizedMessage ?: "Unknown error"
             } finally {
                 _loading.value = false
             }
-        }
-    }
-
-    fun updateStatus(bookingId: Int, status: String) {
-        viewModelScope.launch {
-            try {
-                val user = FirebaseAuth.getInstance().currentUser!!
-                val token = user.getIdToken(false).await().token!!
-
-                RetrofitClient.apiService.updateBookingStatus(
-                    "Bearer $token",
-                    bookingId,
-                    status
-                )
-
-                loadBookings()
-
-            } catch (_: Exception) {}
         }
     }
 }

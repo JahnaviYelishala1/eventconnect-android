@@ -234,6 +234,11 @@ interface ApiService {
         @Query("status") status: String
     ): Response<Map<String, String>>
 
+    @GET("api/bookings/organizer")
+    suspend fun getOrganizerBookings(
+        @Header("Authorization") token: String
+    ): Response<List<BookingResponse>>
+
     @GET("api/menus/me")
     suspend fun getMyMenu(
         @Header("Authorization") token: String

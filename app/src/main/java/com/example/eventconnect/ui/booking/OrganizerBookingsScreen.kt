@@ -12,21 +12,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CatererBookingsScreen(
-    viewModel: CatererBookingsViewModel = viewModel()
+fun OrganizerBookingsScreen(
+    viewModel: OrganizerBookingsViewModel = viewModel()
 ) {
     val bookings by viewModel.bookings.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
 
-    LaunchedEffect(Unit) {
-        viewModel.loadBookings()
-    }
+    LaunchedEffect(Unit) { viewModel.loadBookings() }
 
     Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Booking Requests") })
-        }
+        topBar = { TopAppBar(title = { Text("My Booking Requests") }) }
     ) { padding ->
         Box(
             modifier = Modifier
@@ -50,7 +46,7 @@ fun CatererBookingsScreen(
 
                 bookings.isEmpty() -> {
                     Text(
-                        text = "No booking requests",
+                        text = "No booking requests yet.",
                         modifier = Modifier.align(Alignment.Center),
                         style = MaterialTheme.typography.bodyLarge
                     )
@@ -58,26 +54,13 @@ fun CatererBookingsScreen(
 
                 else -> {
                     LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp)
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp)
                     ) {
                         items(bookings) { booking ->
                             ExpandableBookingCard(
                                 booking = booking,
-                                showActions = true,
-                                onAccept = {
-                                    viewModel.updateStatus(
-                                        booking.id,
-                                        "accepted"
-                                    )
-                                },
-                                onReject = {
-                                    viewModel.updateStatus(
-                                        booking.id,
-                                        "rejected"
-                                    )
-                                }
+                                showActions = false
                             )
                         }
                     }

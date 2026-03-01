@@ -139,7 +139,13 @@ fun FindCatererScreen(
                         .padding(vertical = 8.dp)
                         .clickable {
                             navController.navigate(
-                                "caterer_menu/$eventId/${caterer.id}/$attendees/$selectedFoodType"
+                                "caterer_menu/" +
+                                        "$eventId/" +
+                                        "${caterer.id}/" +
+                                        "$attendees/" +
+                                        "$selectedFoodType/" +
+                                        "${priceRange.start.toInt()}/" +
+                                        "${priceRange.endInclusive.toInt()}"
                             )
                         },
                     elevation = CardDefaults.cardElevation(4.dp)

@@ -14,6 +14,8 @@ class BookingViewModel : ViewModel() {
     fun sendBooking(
         eventId: Int,
         catererId: Int,
+        attendees: Int,
+        bookingDate: String,
         items: List<BookingItemRequest>
     ) {
         viewModelScope.launch {
@@ -21,13 +23,17 @@ class BookingViewModel : ViewModel() {
                 val user = FirebaseAuth.getInstance().currentUser ?: return@launch
                 val token = user.getIdToken(false).await().token ?: return@launch
 
+                val request = BookingCreateRequest(
+                    event_id = eventId,
+                    caterer_id = catererId,
+                    attendees = attendees,
+                    booking_date = bookingDate,
+                    items = items
+                )
+
                 RetrofitClient.apiService.createBooking(
                     "Bearer $token",
-                    BookingCreateRequest(
-                        event_id = eventId,
-                        caterer_id = catererId,
-                        items = items
-                    )
+                    request
                 )
 
             } catch (e: Exception) {
