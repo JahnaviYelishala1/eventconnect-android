@@ -12,8 +12,7 @@ import kotlinx.coroutines.tasks.await
 
 class FindCatererViewModel : ViewModel() {
 
-    private val _caterers =
-        MutableStateFlow<List<CatererResponse>>(emptyList())
+    private val _caterers = MutableStateFlow<List<CatererResponse>>(emptyList())
     val caterers: StateFlow<List<CatererResponse>> = _caterers
 
     private val _loading = MutableStateFlow(false)
@@ -30,18 +29,29 @@ class FindCatererViewModel : ViewModel() {
         maxPrice: Double? = null,
         mealStyle: String? = null
     ) {
-        viewModelScope.launch {
+        if (eventId <= 0) {
+            _error.value = "Invalid event ID"
+            return
+        }
 
+        viewModelScope.launch {
             try {
                 _loading.value = true
                 _error.value = null
 
                 val user = FirebaseAuth.getInstance().currentUser
-                    ?: return@launch
+                if (user == null) {
+                    _error.value = "User not logged in"
+                    return@launch
+                }
 
-                val token =
-                    user.getIdToken(false).await().token
-                        ?: return@launch
+                val tokenResult = user.getIdToken(false).await()
+                val token = tokenResult.token
+
+                if (token.isNullOrEmpty()) {
+                    _error.value = "Authentication failed"
+                    return@launch
+                }
 
                 val response =
                     RetrofitClient.apiService.matchCaterers(
@@ -55,14 +65,13 @@ class FindCatererViewModel : ViewModel() {
                     )
 
                 if (response.isSuccessful) {
-                    _caterers.value =
-                        response.body() ?: emptyList()
+                    _caterers.value = response.body() ?: emptyList()
                 } else {
-                    _error.value = "Error ${response.code()}"
+                    _error.value = "Server error ${response.code()}"
                 }
 
             } catch (e: Exception) {
-                _error.value = e.localizedMessage
+                _error.value = e.message ?: "Something went wrong"
             } finally {
                 _loading.value = false
             }

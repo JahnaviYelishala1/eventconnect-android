@@ -8,9 +8,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.eventconnect.data.network.MenuResponse
+import coil.compose.rememberAsyncImagePainter
+import androidx.compose.foundation.Image
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatererMenuManagementScreen(
     viewModel: CatererMenuManagementViewModel = viewModel()
@@ -43,12 +43,38 @@ fun CatererMenuManagementScreen(
         if (loading) {
             CircularProgressIndicator()
         } else {
-
             menu.forEach { item ->
-                MenuCard(
-                    item = item,
-                    onDelete = { viewModel.deleteMenu(item.id) }
-                )
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+
+                        item.image_url?.let {
+                            Image(
+                                painter = rememberAsyncImagePainter(it),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(150.dp)
+                            )
+                            Spacer(Modifier.height(8.dp))
+                        }
+
+                        Text(item.item_name)
+                        Text("₹${item.price}")
+                        Text(item.category ?: "")
+
+                        Spacer(Modifier.height(8.dp))
+
+                        Button(onClick = {
+                            viewModel.deleteMenu(item.id)
+                        }) {
+                            Text("Delete")
+                        }
+                    }
+                }
             }
         }
     }
@@ -56,41 +82,10 @@ fun CatererMenuManagementScreen(
     if (showDialog) {
         AddMenuDialog(
             onDismiss = { showDialog = false },
-            onSave = {
-                viewModel.addMenu(it)
+            onSave = { request, imageUri ->
+                viewModel.addMenu(request, imageUri)
                 showDialog = false
             }
         )
     }
 }
-
-@Composable
-private fun MenuCard(
-    item: MenuResponse,
-    onDelete: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-    ) {
-        Column(Modifier.padding(16.dp)) {
-
-            Text(
-                text = item.item_name,
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Spacer(Modifier.height(4.dp))
-
-            Text("₹${item.price}")
-
-            Spacer(Modifier.height(8.dp))
-
-            Button(onClick = onDelete) {
-                Text("Delete")
-            }
-        }
-    }
-}
-

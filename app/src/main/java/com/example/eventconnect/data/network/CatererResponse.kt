@@ -9,10 +9,11 @@ data class CatererResponse(
     val price_per_plate: Double,
     val veg_supported: Boolean,
     val nonveg_supported: Boolean,
-    val rating: Double,
+    val rating: Double?,
     val latitude: Double,
     val longitude: Double,
     val image_url: String?,
     val distance_km: Double,
-    val services: List<CatererServiceResponse>
+    val services: List<CatererServiceResponse>,
+    val meal_styles: List<String>
 )

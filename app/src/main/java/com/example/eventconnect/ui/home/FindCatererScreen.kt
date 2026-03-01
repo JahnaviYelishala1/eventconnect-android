@@ -1,10 +1,6 @@
 package com.example.eventconnect.ui.home
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
+import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,6 +22,7 @@ import androidx.navigation.NavController
 fun FindCatererScreen(
     navController: NavController,
     eventId: Int,
+    attendees: Int,
     viewModel: FindCatererViewModel = viewModel(),
     defaultMealStyle: String = "Buffet",
     defaultFoodType: String = "Both"
@@ -33,13 +30,13 @@ fun FindCatererScreen(
 
     val caterers by viewModel.caterers.collectAsState()
     val loading by viewModel.loading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     var step by remember { mutableStateOf(1) }
     var selectedFoodType by remember { mutableStateOf(defaultFoodType) }
     var selectedMealStyle by remember { mutableStateOf(defaultMealStyle) }
     var priceRange by remember { mutableStateOf(500f..2000f) }
 
-    // ✅ Initial Load
     LaunchedEffect(eventId) {
         viewModel.loadCaterers(eventId)
     }
@@ -82,28 +79,21 @@ fun FindCatererScreen(
                             )
                         )
                     },
-                    label = "FilterAnimation"
+                    label = ""
                 ) { currentStep ->
 
                     when (currentStep) {
 
-                        /* ---------------- STEP 1 ---------------- */
-                        1 -> FilterStep1(
-                            selectedFoodType = selectedFoodType
-                        ) {
+                        1 -> FilterStep1(selectedFoodType) {
                             selectedFoodType = it
                             step = 2
                         }
 
-                        /* ---------------- STEP 2 ---------------- */
-                        2 -> FilterStep2(
-                            selectedMealStyle = selectedMealStyle
-                        ) {
+                        2 -> FilterStep2(selectedMealStyle) {
                             selectedMealStyle = it
                             step = 3
                         }
 
-                        /* ---------------- STEP 3 ---------------- */
                         3 -> FilterStep3(
                             priceRange = priceRange,
                             onRangeChanged = { priceRange = it }
@@ -123,8 +113,6 @@ fun FindCatererScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            /* ---------------- RESULTS ---------------- */
-
             Text(
                 text = "Caterers Found: ${caterers.size}",
                 style = MaterialTheme.typography.titleMedium
@@ -134,25 +122,49 @@ fun FindCatererScreen(
 
             if (loading) {
                 CircularProgressIndicator()
-            } else {
-                caterers.forEach { caterer ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        elevation = CardDefaults.cardElevation(4.dp)
-                    ) {
-                        Column(
-                            Modifier.padding(16.dp)
-                        ) {
-                            Text(
-                                text = caterer.business_name,
-                                style = MaterialTheme.typography.titleMedium
+            }
+
+            error?.let {
+                Spacer(Modifier.height(8.dp))
+                Text(it, color = MaterialTheme.colorScheme.error)
+            }
+
+            /* ---------------- CATERER LIST ---------------- */
+
+            caterers.forEach { caterer ->
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                        .clickable {
+                            navController.navigate(
+                                "caterer_menu/$eventId/${caterer.id}/$attendees/$selectedFoodType"
                             )
-                            Text("₹${caterer.price_per_plate}")
-                            Text("⭐ ${caterer.rating}")
-                            Text("${caterer.distance_km} km away")
-                        }
+                        },
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+
+                    Column(Modifier.padding(16.dp)) {
+
+                        Text(
+                            text = caterer.business_name,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+
+                        Spacer(Modifier.height(4.dp))
+
+                        Text("₹${caterer.price_per_plate}")
+                        Text("⭐ ${caterer.rating}")
+                        Text("${caterer.distance_km} km away")
+
+                        Spacer(Modifier.height(8.dp))
+
+                        Text(
+                            text = "Tap to view menu →",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
                     }
                 }
             }

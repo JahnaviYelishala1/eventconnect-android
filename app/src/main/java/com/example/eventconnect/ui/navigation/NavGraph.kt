@@ -13,17 +13,15 @@ import androidx.navigation.navArgument
 import com.example.eventconnect.ui.auth.*
 import com.example.eventconnect.ui.home.*
 import com.example.eventconnect.ui.admin.AdminNgoReviewScreen
+import com.example.eventconnect.ui.menu.CatererMenuManagementScreen
+import com.example.eventconnect.ui.menu.CatererMenuScreen
+import com.example.eventconnect.ui.booking.CatererBookingsScreen
 import com.example.eventconnect.ui.ngo.*
 import com.example.eventconnect.ui.profile.*
 import com.google.firebase.auth.FirebaseAuth
 
-/* -------------------------------------------------- */
-/* ---------------- BOTTOM NAV ITEMS ---------------- */
-/* -------------------------------------------------- */
-
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
 
-    // Organizer
     object OrganizerHome :
         BottomNavItem("organizer-home", Icons.Default.Home, "Home")
 
@@ -36,7 +34,6 @@ sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: 
     object OrganizerProfile :
         BottomNavItem("organizer-profile", Icons.Default.AccountCircle, "Profile")
 
-    // Caterer
     object CatererHome :
         BottomNavItem("caterer-home", Icons.Default.Home, "Home")
 
@@ -46,15 +43,12 @@ sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: 
     object CatererProfile :
         BottomNavItem("caterer-profile", Icons.Default.AccountCircle, "Profile")
 
-    // NGO
     object NgoHome :
         BottomNavItem("ngo-home", Icons.Default.Home, "Home")
 
     object NgoProfile :
         BottomNavItem("ngo-profile", Icons.Default.AccountCircle, "Profile")
 }
-
-/* ------------------- NAV GRAPH -------------------- */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,7 +91,7 @@ fun NavGraph() {
 
             when {
 
-                /* ---------------- ORGANIZER ---------------- */
+                /* -------- ORGANIZER -------- */
 
                 currentRoute in organizerRoutes -> {
                     NavigationBar {
@@ -110,14 +104,14 @@ fun NavGraph() {
                             NavigationBarItem(
                                 selected = currentRoute == item.route,
                                 onClick = { navigateTo(item.route) },
-                                icon = { Icon(item.icon, null) },
+                                icon = { Icon(item.icon, contentDescription = null) },
                                 label = { Text(item.label) }
                             )
                         }
                     }
                 }
 
-                /* ---------------- CATERER ---------------- */
+                /* -------- CATERER -------- */
 
                 currentRoute in catererRoutes -> {
                     NavigationBar {
@@ -157,7 +151,7 @@ fun NavGraph() {
                     }
                 }
 
-                /* ---------------- NGO ---------------- */
+                /* -------- NGO -------- */
 
                 currentRoute in ngoRoutes -> {
                     NavigationBar {
@@ -184,7 +178,7 @@ fun NavGraph() {
             modifier = Modifier.padding(padding)
         ) {
 
-            /* ---------------- AUTH ---------------- */
+            /* -------- AUTH -------- */
 
             composable("login") {
                 LoginScreen(
@@ -218,7 +212,7 @@ fun NavGraph() {
                 RoleSelectionScreen(navController)
             }
 
-            /* ---------------- ORGANIZER ---------------- */
+            /* -------- ORGANIZER -------- */
 
             composable(BottomNavItem.OrganizerHome.route) {
                 OrganizerHomeScreen(navController)
@@ -236,18 +230,71 @@ fun NavGraph() {
                 OrganizerProfileScreen(navController)
             }
 
-            /* ---------------- CATERER ---------------- */
+            /* -------- FIND CATERER (FIXED ROUTE) -------- */
+
+            composable(
+                route = "find_caterer/{eventId}/{attendees}",
+                arguments = listOf(
+                    navArgument("eventId") { type = NavType.IntType },
+                    navArgument("attendees") { type = NavType.IntType }
+                )
+            ) { backStackEntry ->
+
+                val eventId = backStackEntry.arguments?.getInt("eventId") ?: 0
+                val attendees = backStackEntry.arguments?.getInt("attendees") ?: 0
+
+                FindCatererScreen(
+                    navController = navController,
+                    eventId = eventId,
+                    attendees = attendees
+                )
+            }
+
+            /* -------- CATERER MENU -------- */
+
+            composable(
+                route = "caterer_menu/{eventId}/{catererId}/{attendees}/{foodType}",
+                arguments = listOf(
+                    navArgument("eventId") { type = NavType.IntType },
+                    navArgument("catererId") { type = NavType.IntType },
+                    navArgument("attendees") { type = NavType.IntType },
+                    navArgument("foodType") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+
+                val eventId = backStackEntry.arguments?.getInt("eventId") ?: 0
+                val catererId = backStackEntry.arguments?.getInt("catererId") ?: 0
+                val attendees = backStackEntry.arguments?.getInt("attendees") ?: 0
+                val foodType = backStackEntry.arguments?.getString("foodType") ?: "Both"
+
+                CatererMenuScreen(
+                    eventId = eventId,
+                    catererId = catererId,
+                    attendees = attendees,
+                    selectedFoodType = foodType,
+                    navController = navController
+                )
+            }
+
+            /* -------- CATERER -------- */
 
             composable(BottomNavItem.CatererHome.route) {
                 CatererHomeScreen(navController)
             }
 
+            composable(BottomNavItem.CatererBookings.route) {
+                CatererBookingsScreen()
+            }
 
             composable(BottomNavItem.CatererProfile.route) {
                 CatererProfileScreen(navController)
             }
 
-            /* ---------------- NGO ---------------- */
+            composable("caterer-menu") {
+                CatererMenuManagementScreen()
+            }
+
+            /* -------- NGO -------- */
 
             composable(BottomNavItem.NgoHome.route) {
                 NgoHomeScreen(navController)
@@ -272,8 +319,6 @@ fun NavGraph() {
             composable("ngo-documents-list") {
                 NgoDocumentsScreen(navController)
             }
-
-            /* ---------------- ADMIN ---------------- */
 
             composable("admin-ngo-review") {
                 AdminNgoReviewScreen(navController)

@@ -7,10 +7,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
-    // ⚠️ IMPORTANT:
-    // Use your FastAPI backend URL
-    // Emulator → http://10.0.2.2:8000
-    // Physical device → http://<your-PC-IP>:8000
     private const val BASE_URL =
         "https://casemated-supercongested-loan.ngrok-free.dev/"
 

@@ -3,8 +3,6 @@ package com.example.eventconnect.ui.home
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.eventconnect.data.network.EventBookingStatusResponse
 import com.example.eventconnect.data.network.EventResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -25,18 +22,13 @@ fun MyEventsScreen(
     val events by viewModel.events.collectAsState()
     val error by viewModel.error.collectAsState()
 
-    var showCompleteSheet by remember { mutableStateOf(false) }
-    var selectedEventId by remember { mutableStateOf<Int?>(null) }
-
     LaunchedEffect(Unit) {
         viewModel.loadEvents()
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("My Events") }
-            )
+            TopAppBar(title = { Text("My Events") })
         }
     ) { padding ->
 
@@ -46,8 +38,7 @@ fun MyEventsScreen(
                     Modifier.fillMaxSize().padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(error!!,
-                        color = MaterialTheme.colorScheme.error)
+                    Text(error!!, color = MaterialTheme.colorScheme.error)
                 }
             }
 
@@ -69,31 +60,57 @@ fun MyEventsScreen(
                     items(events) { event ->
                         EventCard(
                             navController = navController,
-                            event = event,
-                            onCompleteClick = {
-                                selectedEventId = event.id
-                                showCompleteSheet = true
-                            }
+                            event = event
                         )
                     }
                 }
             }
         }
     }
+}
 
-    if (showCompleteSheet && selectedEventId != null) {
-        CompleteEventBottomSheet(
-            onDismiss = { showCompleteSheet = false },
-            onSubmit = { prepared, consumed, location ->
-                viewModel.completeEvent(
-                    selectedEventId!!,
-                    prepared,
-                    consumed,
-                    location
-                )
-                showCompleteSheet = false
+@Composable
+fun EventCard(
+    navController: NavController,
+    event: EventResponse
+) {
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(6.dp)
+    ) {
+        Column(
+            Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            Text(
+                text = event.event_name,
+                style = MaterialTheme.typography.titleLarge
+            )
+
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Guests: ${event.attendees}")
+                Text("Meal: ${event.meal_style}")
             }
-        )
+
+            if (event.status == "CREATED") {
+
+                Button(
+                    onClick = {
+                        navController.navigate(
+                            "find_caterer/${event.id}/${event.attendees}"
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Find Caterer")
+                }
+            }
+        }
     }
 }
 @Composable
@@ -164,9 +181,7 @@ fun EventCard(
 
                 Button(
                     onClick = {
-                        navController.navigate(
-                            "find_caterer/${event.id}?mealStyle=${event.meal_style}&foodType=Both"
-                        )
+                        navController.navigate("find_caterer/${event.id}")
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {

@@ -3,6 +3,7 @@ package com.example.eventconnect.data.network
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
@@ -256,5 +257,12 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("menuId") menuId: Int
     ): Response<Map<String,String>>
+
+    @Multipart
+    @POST("api/menus/upload-image")
+    suspend fun uploadMenuImage(
+        @Header("Authorization") token: String,
+        @Part file: MultipartBody.Part
+    ): Response<ImageUploadResponse>
 
 }
