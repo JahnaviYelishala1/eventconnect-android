@@ -239,6 +239,12 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Response<List<BookingResponse>>
 
+    @PUT("api/bookings/{booking_id}/cancel")
+    suspend fun cancelBooking(
+        @Header("Authorization") token: String,
+        @Path("booking_id") bookingId: Int
+    ): Response<Map<String, String>>
+
     @GET("api/menus/me")
     suspend fun getMyMenu(
         @Header("Authorization") token: String
@@ -269,5 +275,17 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Part file: MultipartBody.Part
     ): Response<ImageUploadResponse>
+
+    @POST("api/payments/create-checkout-session/{bookingId}")
+    suspend fun createCheckoutSession(
+        @Header("Authorization") token: String,
+        @Path("bookingId") bookingId: Int
+    ): Response<CheckoutResponse>
+
+    @GET("api/payments/{bookingId}")
+    suspend fun getPaymentDetails(
+        @Header("Authorization") token: String,
+        @Path("bookingId") bookingId: Int
+    ): Response<PaymentResponse>
 
 }
