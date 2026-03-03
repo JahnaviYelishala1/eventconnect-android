@@ -3,7 +3,7 @@ package com.example.eventconnect.ui.booking
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.eventconnect.data.network.*
-import com.example.eventconnect.websocket.WebSocketManager
+import com.example.eventconnect.websocket.BookingWebSocketManager
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,7 +23,7 @@ class CatererBookingsViewModel : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    private var socketManager: WebSocketManager? = null
+    private var socketManager: BookingWebSocketManager? = null
 
     init {
         connectSocket()
@@ -35,7 +35,7 @@ class CatererBookingsViewModel : ViewModel() {
         val firebaseUid =
             FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-        socketManager = WebSocketManager(firebaseUid) { message ->
+        socketManager = BookingWebSocketManager(firebaseUid) { message ->
 
             val json = JSONObject(message)
             val type = json.getString("type")

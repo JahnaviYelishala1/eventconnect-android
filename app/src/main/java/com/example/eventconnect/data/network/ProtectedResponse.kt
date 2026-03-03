@@ -1,6 +1,7 @@
 package com.example.eventconnect.data.network
 
 data class ProtectedResponse(
+    val id: Int,
     val uid: String,
     val email: String?,
     val role: String?,

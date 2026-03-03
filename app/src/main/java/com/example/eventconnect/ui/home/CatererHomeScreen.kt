@@ -2,9 +2,12 @@ package com.example.eventconnect.ui.home
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -45,10 +48,17 @@ fun CatererHomeScreen(navController: NavController) {
         }
 
         DashboardCard(
-            title = "Profile",
-            icon = Icons.Default.Person
+            title = "Revenue Analytics",
+            icon = Icons.Default.BarChart
         ) {
-            navController.navigate("caterer-profile")
+            navController.navigate("caterer-revenue")
+        }
+
+        DashboardCard(
+            title = "Payment History",
+            icon = Icons.Default.ReceiptLong
+        ) {
+            navController.navigate("caterer-payment-history")
         }
     }
 }

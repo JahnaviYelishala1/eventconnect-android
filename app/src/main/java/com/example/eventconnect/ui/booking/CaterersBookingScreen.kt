@@ -9,12 +9,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatererBookingsScreen(
+    navController: NavController,
     viewModel: CatererBookingsViewModel = viewModel()
 ) {
+
     val bookings by viewModel.bookings.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -28,58 +31,57 @@ fun CatererBookingsScreen(
             TopAppBar(title = { Text("Booking Requests") })
         }
     ) { padding ->
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
+
             when {
-                loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
+                loading -> CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
 
-                error != null -> {
-                    Text(
-                        text = error ?: "An unknown error occurred",
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(16.dp),
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
+                error != null -> Text(
+                    error ?: "An unknown error occurred",
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.error
+                )
 
-                bookings.isEmpty() -> {
-                    Text(
-                        text = "No booking requests",
-                        modifier = Modifier.align(Alignment.Center),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
+                bookings.isEmpty() -> Text(
+                    "No booking requests",
+                    modifier = Modifier.align(Alignment.Center)
+                )
 
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp)
-                    ) {
-                        items(bookings) { booking ->
-                            ExpandableBookingCard(
-                                booking = booking,
-                                showActions = true,
-                                onAccept = {
-                                    viewModel.updateStatus(
-                                        booking.id,
-                                        "accepted"
-                                    )
-                                },
-                                onReject = {
-                                    viewModel.updateStatus(
-                                        booking.id,
-                                        "rejected"
-                                    )
-                                }
-                            )
-                        }
+                else -> LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    items(bookings) { booking ->
+                        ExpandableBookingCard(
+                            booking = booking,
+                            showActions = true,
+                            onAccept = {
+                                viewModel.updateStatus(
+                                    booking.id,
+                                    "accepted"
+                                )
+                            },
+                            onReject = {
+                                viewModel.updateStatus(
+                                    booking.id,
+                                    "rejected"
+                                )
+                            },
+                            onChat = {
+                                navController.navigate("chat/${booking.id}")
+                            },
+                            onTrackPreparation = {
+                                navController.navigate("caterer-preparation/${booking.id}")
+                            }
+                        )
                     }
                 }
             }

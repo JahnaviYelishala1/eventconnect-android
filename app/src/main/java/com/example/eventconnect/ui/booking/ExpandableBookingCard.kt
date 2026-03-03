@@ -9,7 +9,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.eventconnect.data.network.BookingResponse
 import com.example.eventconnect.data.network.PaymentResponse
-import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
@@ -20,19 +19,21 @@ fun ExpandableBookingCard(
     onReject: (() -> Unit)? = null,
     onCancel: (() -> Unit)? = null,
     onPay: (() -> Unit)? = null,
-    paymentDetails: PaymentResponse? = null
+    paymentDetails: PaymentResponse? = null,
+    onRefund: (() -> Unit)? = null,
+    onDownloadInvoice: (() -> Unit)? = null,
+    onChat: (() -> Unit)? = null,
+    onTrackPreparation: (() -> Unit)? = null   // ✅ NEW
 ) {
-    var expanded by remember { mutableStateOf(false) }
 
+    var expanded by remember { mutableStateOf(false) }
     val status = booking.status.lowercase(Locale.getDefault())
 
     val statusColor = when (status) {
         "pending" -> MaterialTheme.colorScheme.secondary
         "accepted" -> MaterialTheme.colorScheme.primary
         "paid" -> MaterialTheme.colorScheme.tertiary
-        "rejected" -> MaterialTheme.colorScheme.error
-        "cancelled" -> MaterialTheme.colorScheme.error
-        "completed" -> MaterialTheme.colorScheme.tertiary
+        "refunded" -> MaterialTheme.colorScheme.error
         else -> MaterialTheme.colorScheme.secondary
     }
 
@@ -44,34 +45,14 @@ fun ExpandableBookingCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // ----------------------------
-            // Basic Booking Info
-            // ----------------------------
             Text(
                 text = booking.event_name ?: "Event",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(Modifier.height(4.dp))
-
             Text("Caterer: ${booking.caterer_name ?: "N/A"}")
             Text("Guests: ${booking.attendees ?: 0}")
-
-            val formattedDate = booking.booking_date?.let {
-                try {
-                    val parser =
-                        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                    val formatter =
-                        SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-                    val date = parser.parse(it)
-                    if (date != null) formatter.format(date) else it
-                } catch (e: Exception) {
-                    it
-                }
-            } ?: "N/A"
-
-            Text("Date: $formattedDate")
             Text("Total: ₹${booking.total_price}")
 
             Spacer(Modifier.height(6.dp))
@@ -84,101 +65,94 @@ fun ExpandableBookingCard(
                 )
             )
 
-            // ============================================================
-            // ORGANIZER SIDE (showActions = false)
-            // ============================================================
+            Spacer(Modifier.height(12.dp))
+
+            // ================================
+            // ORGANIZER SIDE
+            // ================================
             if (!showActions) {
 
-                val canCancel =
-                    status == "pending" || status == "accepted"
+                if (status == "accepted") {
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onPay?.invoke() }
+                    ) {
+                        Text("Pay Now")
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
 
-                Spacer(Modifier.height(12.dp))
+                if (status == "paid" && paymentDetails != null) {
 
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Payment Completed ✅",
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
 
-                    // Pay Button
-                    if (status == "accepted") {
-                        Button(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = { onPay?.invoke() }
-                        ) {
-                            Text("Pay Now")
-                        }
+                    Text("₹${paymentDetails.amount} paid")
+                    Text("${paymentDetails.card_brand?.uppercase()} •••• ${paymentDetails.card_last4}")
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onDownloadInvoice?.invoke() }
+                    ) {
+                        Text("Download Invoice")
                     }
 
-                    // Cancel Button
-                    if (canCancel) {
-                        Button(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.error
-                            ),
-                            onClick = { onCancel?.invoke() }
-                        ) {
-                            Text("Cancel Request")
-                        }
+                    Spacer(Modifier.height(8.dp))
+
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        ),
+                        onClick = { onRefund?.invoke() }
+                    ) {
+                        Text("Request Refund")
                     }
 
-                    // Detailed Paid Info
-                    if (status == "paid" && paymentDetails != null) {
+                    Spacer(Modifier.height(8.dp))
+                }
 
-                        Spacer(Modifier.height(8.dp))
+                if (status == "refunded") {
+                    Text(
+                        "Refunded ❌",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
 
-                        Text(
-                            text = "Payment Completed ✅",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.tertiary
-                        )
+                if (status != "cancelled" && status != "rejected") {
 
-                        Text(
-                            text = "₹${paymentDetails.amount} paid",
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                    Spacer(Modifier.height(8.dp))
 
-                        Text(
-                            text = "${paymentDetails.card_brand?.uppercase()} •••• ${paymentDetails.card_last4}",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-
-                        val paidDate = try {
-                            val parser = SimpleDateFormat(
-                                "yyyy-MM-dd'T'HH:mm:ss",
-                                Locale.getDefault()
-                            )
-                            val formatter = SimpleDateFormat(
-                                "dd MMM yyyy, hh:mm a",
-                                Locale.getDefault()
-                            )
-                            formatter.format(parser.parse(paymentDetails.paid_at)!!)
-                        } catch (e: Exception) {
-                            paymentDetails.paid_at
-                        }
-
-                        Text(
-                            text = "Paid on $paidDate",
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onChat?.invoke() }
+                    ) {
+                        Text("Chat with Caterer")
                     }
 
-                    // Fallback simple paid display if details not fetched yet
-                    if (status == "paid" && paymentDetails == null) {
-                        Text(
-                            text = "Payment Completed ✅",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.tertiary
-                        )
+                    Spacer(Modifier.height(8.dp))
+
+                    // ✅ NEW BUTTON (Organizer)
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onTrackPreparation?.invoke() }
+                    ) {
+                        Text("Track Preparation")
                     }
                 }
             }
 
-            // ============================================================
-            // CATERER SIDE (showActions = true)
-            // ============================================================
+            // ================================
+            // CATERER SIDE
+            // ================================
             if (showActions) {
 
-                Spacer(Modifier.height(12.dp))
-
                 when (status) {
+
                     "pending" -> {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -196,39 +170,54 @@ fun ExpandableBookingCard(
                                 Text("Reject")
                             }
                         }
+                        Spacer(Modifier.height(8.dp))
                     }
 
                     "accepted" -> {
                         Text(
-                            text = "Awaiting Payment from Organizer",
-                            style = MaterialTheme.typography.bodyMedium,
+                            "Awaiting Payment from Organizer",
                             color = MaterialTheme.colorScheme.primary
                         )
+                        Spacer(Modifier.height(8.dp))
                     }
 
                     "paid" -> {
                         Text(
-                            text = "Payment Received ✅",
-                            style = MaterialTheme.typography.bodyMedium,
+                            "Payment Received ✅",
                             color = MaterialTheme.colorScheme.tertiary
                         )
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
+
+                if (status != "cancelled" && status != "rejected") {
+
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onChat?.invoke() }
+                    ) {
+                        Text("Chat with Organizer")
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    // ✅ NEW BUTTON (Caterer)
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onTrackPreparation?.invoke() }
+                    ) {
+                        Text("Update Preparation")
                     }
                 }
             }
 
-            // ============================================================
-            // Expandable Items
-            // ============================================================
             if (expanded) {
                 Spacer(Modifier.height(12.dp))
                 HorizontalDivider()
                 Spacer(Modifier.height(8.dp))
 
                 booking.items.forEach { item ->
-                    Text(
-                        text = "${item.item_name} x${item.quantity} - ₹${item.price}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    Text("${item.item_name} x${item.quantity} - ₹${item.price}")
                     Spacer(Modifier.height(4.dp))
                 }
             }

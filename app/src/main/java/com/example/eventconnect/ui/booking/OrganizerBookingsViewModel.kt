@@ -5,12 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.example.eventconnect.data.network.BookingResponse
 import com.example.eventconnect.data.network.PaymentResponse
 import com.example.eventconnect.data.network.RetrofitClient
-import com.example.eventconnect.websocket.WebSocketManager
+import com.example.eventconnect.websocket.BookingWebSocketManager
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import okhttp3.ResponseBody
 import org.json.JSONObject
 import retrofit2.Response
 
@@ -26,7 +27,7 @@ class OrganizerBookingsViewModel : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    private var socketManager: WebSocketManager? = null
+    private var socketManager: BookingWebSocketManager? = null
 
     init {
         connectSocket()
@@ -36,15 +37,13 @@ class OrganizerBookingsViewModel : ViewModel() {
         val firebaseUid =
             FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-        socketManager = WebSocketManager(firebaseUid) { message ->
+        socketManager = BookingWebSocketManager(firebaseUid) { message ->
             val json = JSONObject(message)
             val type = json.getString("type")
 
             when (type) {
                 "booking_updated",
-                "booking_cancelled" -> {
-                    loadBookings()
-                }
+                "booking_cancelled" -> loadBookings()
             }
         }
 
@@ -99,7 +98,6 @@ class OrganizerBookingsViewModel : ViewModel() {
         }
     }
 
-    // 🔥 NEW: Create Stripe Checkout Session
     fun createPaymentSession(
         bookingId: Int,
         onUrlReady: (String) -> Unit
@@ -146,6 +144,72 @@ class OrganizerBookingsViewModel : ViewModel() {
 
             } catch (e: Exception) {
                 onResult(null)
+            }
+        }
+    }
+
+    fun refundBooking(bookingId: Int) {
+        viewModelScope.launch {
+            try {
+                val user = FirebaseAuth.getInstance().currentUser!!
+                val token = user.getIdToken(false).await().token!!
+
+                val response = RetrofitClient.apiService.refundPayment(
+                    "Bearer $token",
+                    bookingId
+                )
+
+                if (response.isSuccessful) {
+                    loadBookings()
+                } else {
+                    _error.value = "Refund failed"
+                }
+
+            } catch (e: Exception) {
+                _error.value = e.localizedMessage
+            }
+        }
+    }
+
+    // 🔥 Invoice Download (Returns URL)
+    fun getInvoiceUrl(
+        bookingId: Int,
+        onUrlReady: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val url =
+                    "https://casemated-supercongested-loan.ngrok-free.dev/api/payments/invoice/$bookingId"
+                onUrlReady(url)
+            } catch (e: Exception) {
+                _error.value = e.localizedMessage
+            }
+        }
+    }
+
+    fun downloadInvoice(
+        bookingId: Int,
+        onSuccess: (ByteArray) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val user = FirebaseAuth.getInstance().currentUser!!
+                val token = user.getIdToken(false).await().token!!
+
+                val response = RetrofitClient.apiService
+                    .downloadInvoice("Bearer $token", bookingId)
+
+                if (response.isSuccessful) {
+                    response.body()?.let { body ->
+                        val bytes = body.bytes()
+                        onSuccess(bytes)
+                    }
+                } else {
+                    _error.value = "Invoice download failed"
+                }
+
+            } catch (e: Exception) {
+                _error.value = e.localizedMessage
             }
         }
     }

@@ -93,5 +93,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
     implementation("androidx.compose.animation:animation:<latest_version>")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
 
 }

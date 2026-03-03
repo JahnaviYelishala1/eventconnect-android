@@ -20,6 +20,12 @@ import com.example.eventconnect.ui.ngo.*
 import com.example.eventconnect.ui.profile.*
 import com.google.firebase.auth.FirebaseAuth
 import com.example.eventconnect.ui.booking.OrganizerBookingsScreen
+import com.example.eventconnect.ui.chat.ChatScreen
+import com.example.eventconnect.ui.revenue.RevenueScreen
+import com.example.eventconnect.ui.payment.PaymentHistoryScreen
+import com.example.eventconnect.ui.preparation.CatererPreparationScreen
+import com.example.eventconnect.ui.preparation.PreparationStatusScreen
+
 
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
 
@@ -258,7 +264,7 @@ fun NavGraph() {
             }
 
             composable(BottomNavItem.CatererBookings.route) {
-                CatererBookingsScreen()
+                CatererBookingsScreen(navController)
             }
 
             composable(BottomNavItem.CatererProfile.route) {
@@ -267,6 +273,14 @@ fun NavGraph() {
 
             composable("caterer-menu") {
                 CatererMenuManagementScreen()
+            }
+
+            composable("caterer-revenue") {
+                RevenueScreen()
+            }
+
+            composable("caterer-payment-history") {
+                PaymentHistoryScreen()
             }
 
             /* -------- NGO -------- */
@@ -299,7 +313,52 @@ fun NavGraph() {
             }
 
             composable("organizer-bookings") {
-                OrganizerBookingsScreen()
+                OrganizerBookingsScreen(navController)
+            }
+
+            composable(
+                route = "chat/{bookingId}",
+                arguments = listOf(
+                    navArgument("bookingId") {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+
+                val bookingId =
+                    backStackEntry.arguments?.getInt("bookingId")!!
+
+                ChatScreen(bookingId = bookingId)
+            }
+
+            composable(
+                route = "preparation/{bookingId}",
+                arguments = listOf(
+                    navArgument("bookingId") {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+
+                val bookingId =
+                    backStackEntry.arguments?.getInt("bookingId")!!
+
+                PreparationStatusScreen(bookingId)
+            }
+
+            composable(
+                route = "caterer-preparation/{bookingId}",
+                arguments = listOf(
+                    navArgument("bookingId") {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+
+                val bookingId =
+                    backStackEntry.arguments?.getInt("bookingId")!!
+
+                CatererPreparationScreen(bookingId)
             }
         }
     }

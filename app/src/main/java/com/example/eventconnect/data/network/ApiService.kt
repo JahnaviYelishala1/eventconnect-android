@@ -1,6 +1,7 @@
 package com.example.eventconnect.data.network
 
 import okhttp3.MultipartBody
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -287,5 +288,46 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("bookingId") bookingId: Int
     ): Response<PaymentResponse>
+
+    @GET("api/bookings/caterer/revenue")
+    suspend fun getCatererRevenue(
+        @Header("Authorization") token: String
+    ): Response<RevenueResponse>
+
+    @GET("api/payments/caterer/history")
+    suspend fun getCatererPaymentHistory(
+        @Header("Authorization") token: String
+    ): Response<List<PaymentHistoryResponse>>
+
+    @POST("api/payments/refund/{bookingId}")
+    suspend fun refundPayment(
+        @Header("Authorization") token: String,
+        @Path("bookingId") bookingId: Int
+    ): Response<Map<String, String>>
+
+    @GET("api/payments/invoice/{booking_id}")
+    suspend fun downloadInvoice(
+        @Header("Authorization") token: String,
+        @Path("booking_id") bookingId: Int
+    ): Response<ResponseBody>
+
+    @GET("api/chat/{bookingId}")
+    suspend fun getChatHistory(
+        @Header("Authorization") token: String,
+        @Path("bookingId") bookingId: Int
+    ): Response<List<ChatMessageResponse>>
+
+    @PUT("api/bookings/{bookingId}/preparation-status")
+    suspend fun updatePreparationStatus(
+        @Header("Authorization") token: String,
+        @Path("bookingId") bookingId: Int,
+        @Query("status") status: String
+    ): Response<Map<String, String>>
+
+    @GET("api/bookings/{bookingId}/preparation-status")
+    suspend fun getPreparationStatus(
+        @Header("Authorization") token: String,
+        @Path("bookingId") bookingId: Int
+    ): Response<PreparationStatusResponse>
 
 }
