@@ -1,11 +1,13 @@
 package com.example.eventconnect.ui.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
@@ -16,6 +18,7 @@ import com.example.eventconnect.ui.admin.AdminNgoReviewScreen
 import com.example.eventconnect.ui.menu.CatererMenuManagementScreen
 import com.example.eventconnect.ui.menu.CatererMenuScreen
 import com.example.eventconnect.ui.booking.CatererBookingsScreen
+import com.example.eventconnect.ui.booking.FoodPredictionScreen
 import com.example.eventconnect.ui.ngo.*
 import com.example.eventconnect.ui.profile.*
 import com.google.firebase.auth.FirebaseAuth
@@ -29,9 +32,9 @@ import com.example.eventconnect.ui.preparation.PreparationStatusScreen
 
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
 
-    object OrganizerHome : BottomNavItem("organizer-home", Icons.Default.Home, "Home")
-    object OrganizerEvents : BottomNavItem("my-events", Icons.Default.List, "My Events")
-    object OrganizerCreateEvent : BottomNavItem("create-event", Icons.Default.Add, "Create")
+    object OrganizerHome : BottomNavItem("organizer-home", Icons.Default.Home, "home")
+    object OrganizerEvents : BottomNavItem("my-events", Icons.Default.FormatListBulleted, "New Event")
+    object OrganizerCreateEvent : BottomNavItem("create-event", Icons.Default.AddBox, "Create")
     object OrganizerBookings : BottomNavItem("organizer-bookings", Icons.Default.ReceiptLong, "Bookings")
     object OrganizerProfile : BottomNavItem("organizer-profile", Icons.Default.AccountCircle, "Profile")
 
@@ -84,19 +87,28 @@ fun NavGraph() {
             when {
                 /* -------- ORGANIZER -------- */
                 currentRoute in organizerRoutes -> {
-                    NavigationBar {
+                    NavigationBar(
+                        containerColor = Color(0xFF9F5FFF),
+                        contentColor = Color.Black
+                    ) {
                         listOf(
                             BottomNavItem.OrganizerHome,
                             BottomNavItem.OrganizerEvents,
                             BottomNavItem.OrganizerCreateEvent,
-                            BottomNavItem.OrganizerBookings,
                             BottomNavItem.OrganizerProfile
                         ).forEach { item ->
                             NavigationBarItem(
                                 selected = currentRoute == item.route,
                                 onClick = { navigateTo(item.route) },
                                 icon = { Icon(item.icon, contentDescription = null) },
-                                label = { Text(item.label) }
+                                label = { Text(item.label) },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = Color.Black,
+                                    selectedTextColor = Color.Black,
+                                    unselectedIconColor = Color.Black.copy(alpha = 0.6f),
+                                    unselectedTextColor = Color.Black.copy(alpha = 0.6f),
+                                    indicatorColor = Color.Transparent
+                                )
                             )
                         }
                     }
@@ -359,6 +371,16 @@ fun NavGraph() {
                     backStackEntry.arguments?.getInt("bookingId")!!
 
                 CatererPreparationScreen(bookingId)
+            }
+
+            composable(
+                route = "food_prediction/{bookingId}",
+                arguments = listOf(navArgument("bookingId") { type = NavType.IntType })
+            ) { backStackEntry ->
+
+                val bookingId = backStackEntry.arguments?.getInt("bookingId")!!
+
+                FoodPredictionScreen(bookingId)
             }
         }
     }

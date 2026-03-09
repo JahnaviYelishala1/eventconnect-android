@@ -5,17 +5,23 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     bookingId: Int
@@ -34,64 +40,115 @@ fun ChatScreen(
         viewModel.connectSocket()
     }
 
-    // ✅ Auto scroll when new message arrives
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.size - 1)
         }
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(12.dp)
-        ) {
-
-            itemsIndexed(messages) { index, msg ->
-
-                val isMe = msg.sender_id == viewModel.currentUserId
-
-                ChatBubble(
-                    message = msg.message,
-                    timestamp = msg.timestamp,
-                    isMe = isMe
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF7B2FF2),
+                        Color(0xFF9F5FFF)
+                    )
                 )
-
-                Spacer(modifier = Modifier.height(6.dp))
-            }
-        }
-
-        Divider()
-
-        Row(
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            TextField(
-                value = text,
-                onValueChange = { text = it },
-                modifier = Modifier.weight(1f),
-                placeholder = { Text("Type a message...") }
             )
-
-            Spacer(Modifier.width(8.dp))
-
-            Button(
-                onClick = {
-                    viewModel.sendMessage(text)
-                    text = ""
-                }
+    ) {
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            "Chat",
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Color.Black
+                        )
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = Color.Transparent
+                    )
+                )
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
             ) {
-                Text("Send")
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    itemsIndexed(messages) { _, msg ->
+                        val isMe = msg.sender_id == viewModel.currentUserId
+                        ChatBubble(
+                            message = msg.message,
+                            timestamp = msg.timestamp,
+                            isMe = isMe
+                        )
+                    }
+                }
+
+                Surface(
+                    color = Color.Black.copy(alpha = 0.1f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth()
+                            .navigationBarsPadding(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = text,
+                            onValueChange = { text = it },
+                            placeholder = { Text("Type a message...", color = Color.White.copy(alpha = 0.7f)) },
+                            shape = RoundedCornerShape(24.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(
+                                    Color(0xFFB388FF),
+                                    RoundedCornerShape(24.dp)
+                                ),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedBorderColor = Color.Transparent,
+                                focusedBorderColor = Color.Transparent,
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                cursorColor = Color.Black
+                            )
+                        )
+
+                        Spacer(Modifier.width(8.dp))
+
+                        IconButton(
+                            onClick = {
+                                if (text.isNotBlank()) {
+                                    viewModel.sendMessage(text)
+                                    text = ""
+                                }
+                            },
+                            modifier = Modifier
+                                .size(56.dp)
+                                .background(Color(0xFF7B2FF2), RoundedCornerShape(24.dp))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Send,
+                                contentDescription = "Send",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -103,54 +160,37 @@ fun ChatBubble(
     timestamp: String,
     isMe: Boolean
 ) {
+    val alignment = if (isMe) Alignment.CenterEnd else Alignment.CenterStart
+    val bubbleColor = if (isMe) Color(0xFFB388FF) else Color.White.copy(alpha = 0.2f)
+    val shape = if (isMe) {
+        RoundedCornerShape(20.dp, 20.dp, 4.dp, 20.dp)
+    } else {
+        RoundedCornerShape(20.dp, 20.dp, 20.dp, 4.dp)
+    }
 
-    val bubbleColor =
-        if (isMe)
-            MaterialTheme.colorScheme.primary
-        else
-            MaterialTheme.colorScheme.surfaceVariant
-
-    val textColor =
-        if (isMe)
-            MaterialTheme.colorScheme.onPrimary
-        else
-            MaterialTheme.colorScheme.onSurface
-
-    val alignment =
-        if (isMe) Arrangement.End else Arrangement.Start
-
-    Row(
+    Box(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = alignment
+        contentAlignment = alignment
     ) {
-
         Surface(
             color = bubbleColor,
-            shape = if (isMe)
-                MaterialTheme.shapes.medium.copy(
-                    topEnd = androidx.compose.foundation.shape.ZeroCornerSize
-                )
-            else
-                MaterialTheme.shapes.medium.copy(
-                    topStart = androidx.compose.foundation.shape.ZeroCornerSize
-                )
+            shape = shape,
+            modifier = Modifier.widthIn(max = 280.dp)
         ) {
-
             Column(
-                modifier = Modifier.padding(12.dp)
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
             ) {
-
                 Text(
                     text = message,
-                    color = textColor
+                    color = Color.Black,
+                    fontSize = 16.sp
                 )
-
                 Spacer(Modifier.height(4.dp))
-
                 Text(
                     text = formatTime(timestamp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = textColor.copy(alpha = 0.7f)
+                    fontSize = 10.sp,
+                    color = Color.Black.copy(alpha = 0.6f),
+                    modifier = Modifier.align(Alignment.End)
                 )
             }
         }

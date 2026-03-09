@@ -80,6 +80,9 @@ fun CatererBookingsScreen(
                             },
                             onTrackPreparation = {
                                 navController.navigate("caterer-preparation/${booking.id}")
+                            },
+                                    onPredictFood = {
+                                navController.navigate("food_prediction/${booking.id}")
                             }
                         )
                     }

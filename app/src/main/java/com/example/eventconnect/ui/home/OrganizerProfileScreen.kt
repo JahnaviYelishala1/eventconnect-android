@@ -104,8 +104,8 @@ fun OrganizerProfileContent(
     navController: NavController
 ) {
     val email = FirebaseAuth.getInstance().currentUser?.email
-    val backgroundColor = Color(0xFFFDF6E3) // Light cream
-    val buttonColor = Color(0xFF9EAD8F) // Grayish green
+    val backgroundColor = Color.White // Classic white background
+    val buttonColor = Color(0xFF7B2FF2) // Purple accent
     val darkTextColor = Color.Black
 
     Scaffold(
@@ -116,7 +116,7 @@ fun OrganizerProfileContent(
                 },
                 actions = {
                     IconButton(onClick = { /* TODO: Notification screen */ }) {
-                        Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = darkTextColor)
+                        Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = buttonColor)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -144,7 +144,7 @@ fun OrganizerProfileContent(
                     modifier = Modifier
                         .size(80.dp)
                         .clip(CircleShape)
-                        .background(Color.Gray), // Placeholder background
+                        .background(Color(0xFF7B2FF2)), // Purple placeholder background
                     contentScale = ContentScale.Crop,
                 )
                 Spacer(modifier = Modifier.width(16.dp))
@@ -159,10 +159,11 @@ fun OrganizerProfileContent(
 
             Button(
                 onClick = onEdit,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray),
-                modifier = Modifier.align(Alignment.Start)
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7B2FF2)),
+                modifier = Modifier.align(Alignment.Start),
+                shape = CircleShape
             ) {
-                Text("Edit Profile", color = darkTextColor)
+                Text("Edit Profile", color = Color.White)
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -186,10 +187,10 @@ fun OrganizerProfileContent(
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowRight,
                                 contentDescription = null, // Decorative icon
-                                tint = darkTextColor
+                                tint = buttonColor
                             )
                         }
-                        Divider(color = Color.LightGray)
+                        Divider(color = Color(0xFF7B2FF2))
                     }
                 }
             }
@@ -206,7 +207,8 @@ fun OrganizerProfileContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = buttonColor)
+                colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
+                shape = CircleShape
             ) {
                 Text("Logout", color = Color.White, fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp))
             }

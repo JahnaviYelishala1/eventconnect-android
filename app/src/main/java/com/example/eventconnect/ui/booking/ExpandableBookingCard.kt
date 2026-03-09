@@ -1,12 +1,20 @@
 package com.example.eventconnect.ui.booking
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.eventconnect.data.network.BookingResponse
 import com.example.eventconnect.data.network.PaymentResponse
 import java.util.*
@@ -23,204 +31,265 @@ fun ExpandableBookingCard(
     onRefund: (() -> Unit)? = null,
     onDownloadInvoice: (() -> Unit)? = null,
     onChat: (() -> Unit)? = null,
-    onTrackPreparation: (() -> Unit)? = null   // ✅ NEW
+    onTrackPreparation: (() -> Unit)? = null,
+    onPredictFood: (() -> Unit)? = null
 ) {
 
     var expanded by remember { mutableStateOf(false) }
     val status = booking.status.lowercase(Locale.getDefault())
 
-    val statusColor = when (status) {
-        "pending" -> MaterialTheme.colorScheme.secondary
-        "accepted" -> MaterialTheme.colorScheme.primary
-        "paid" -> MaterialTheme.colorScheme.tertiary
-        "refunded" -> MaterialTheme.colorScheme.error
-        else -> MaterialTheme.colorScheme.secondary
-    }
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .clickable { expanded = !expanded }
+            .clickable { expanded = !expanded },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
 
-            Text(
-                text = booking.event_name ?: "Event",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
 
-            Text("Caterer: ${booking.caterer_name ?: "N/A"}")
-            Text("Guests: ${booking.attendees ?: 0}")
-            Text("Total: ₹${booking.total_price}")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
 
-            Spacer(Modifier.height(6.dp))
-
-            AssistChip(
-                onClick = {},
-                label = { Text(status.uppercase(Locale.getDefault())) },
-                colors = AssistChipDefaults.assistChipColors(
-                    containerColor = statusColor.copy(alpha = 0.2f)
-                )
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            // ================================
-            // ORGANIZER SIDE
-            // ================================
-            if (!showActions) {
-
-                if (status == "accepted") {
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { onPay?.invoke() }
-                    ) {
-                        Text("Pay Now")
-                    }
-                    Spacer(Modifier.height(8.dp))
-                }
-
-                if (status == "paid" && paymentDetails != null) {
+                Column(modifier = Modifier.weight(1f)) {
 
                     Text(
-                        "Payment Completed ✅",
-                        color = MaterialTheme.colorScheme.tertiary
+                        text = booking.event_name ?: "Event",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
                     )
 
-                    Text("₹${paymentDetails.amount} paid")
-                    Text("${paymentDetails.card_brand?.uppercase()} •••• ${paymentDetails.card_last4}")
-
-                    Spacer(Modifier.height(8.dp))
-
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { onDownloadInvoice?.invoke() }
-                    ) {
-                        Text("Download Invoice")
-                    }
-
-                    Spacer(Modifier.height(8.dp))
-
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error
-                        ),
-                        onClick = { onRefund?.invoke() }
-                    ) {
-                        Text("Request Refund")
-                    }
-
-                    Spacer(Modifier.height(8.dp))
-                }
-
-                if (status == "refunded") {
                     Text(
-                        "Refunded ❌",
-                        color = MaterialTheme.colorScheme.error
+                        text = "Caterer: ${booking.caterer_name ?: "N/A"}",
+                        fontSize = 14.sp,
+                        color = Color.Gray
                     )
                 }
 
-                if (status != "cancelled" && status != "rejected") {
+                val statusColor = when (status) {
+                    "pending" -> Color(0xFFFF9500)
+                    "accepted" -> Color(0xFF007AFF)
+                    "paid" -> Color(0xFF34C759)
+                    "rejected", "cancelled" -> Color(0xFFFF3B30)
+                    else -> Color.Gray
+                }
 
-                    Spacer(Modifier.height(8.dp))
+                Surface(
+                    color = statusColor.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
 
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { onChat?.invoke() }
-                    ) {
-                        Text("Chat with Caterer")
-                    }
+                    Text(
+                        text = status.uppercase(),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        color = statusColor,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
 
-                    Spacer(Modifier.height(8.dp))
+            HorizontalDivider()
 
-                    // ✅ NEW BUTTON (Organizer)
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { onTrackPreparation?.invoke() }
-                    ) {
-                        Text("Track Preparation")
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                BookingInfoBox("Guests", (booking.attendees ?: 0).toString())
+                BookingInfoBox("Price", "₹${booking.total_price}")
+                BookingInfoBox("Booking ID", "#${booking.id}")
+            }
+
+            AnimatedVisibility(visible = expanded) {
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFF2F2F7), RoundedCornerShape(8.dp))
+                        .padding(12.dp)
+                        .border(1.dp, Color(0xFFE5E5EA), RoundedCornerShape(8.dp))
+                ) {
+
+                    Text(
+                        "Order Summary",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    booking.items.forEach { item ->
+
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+
+                            Text("${item.item_name} x${item.quantity}")
+
+                            Text("₹${item.price}", fontWeight = FontWeight.Medium)
+                        }
                     }
                 }
             }
 
-            // ================================
-            // CATERER SIDE
-            // ================================
-            if (showActions) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
 
-                when (status) {
+                if (!showActions) {
 
-                    "pending" -> {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Button(onClick = { onAccept?.invoke() }) {
-                                Text("Accept")
+                    if (status == "accepted") {
+
+                        BookingActionButton(
+                            text = "Pay Now",
+                            containerColor = Color.Black,
+                            contentColor = Color.White
+                        ) { onPay?.invoke() }
+                    }
+
+                    if (status == "paid" && paymentDetails != null) {
+
+                        Text(
+                            "Payment Confirmed ✅",
+                            color = Color(0xFF34C759),
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        BookingActionButton("Download Invoice", isOutlined = true) {
+                            onDownloadInvoice?.invoke()
+                        }
+                    }
+
+                    if (status != "cancelled" && status != "rejected") {
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+                            Box(Modifier.weight(1f)) {
+                                BookingActionButton("Chat", isOutlined = true) {
+                                    onChat?.invoke()
+                                }
                             }
 
-                            Button(
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.error
-                                ),
-                                onClick = { onReject?.invoke() }
-                            ) {
-                                Text("Reject")
+                            Box(Modifier.weight(1f)) {
+                                BookingActionButton(
+                                    "Track",
+                                    containerColor = Color.Black,
+                                    contentColor = Color.White
+                                ) {
+                                    onTrackPreparation?.invoke()
+                                }
                             }
                         }
-                        Spacer(Modifier.height(8.dp))
-                    }
-
-                    "accepted" -> {
-                        Text(
-                            "Awaiting Payment from Organizer",
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(Modifier.height(8.dp))
-                    }
-
-                    "paid" -> {
-                        Text(
-                            "Payment Received ✅",
-                            color = MaterialTheme.colorScheme.tertiary
-                        )
-                        Spacer(Modifier.height(8.dp))
                     }
                 }
 
-                if (status != "cancelled" && status != "rejected") {
+                else {
 
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { onChat?.invoke() }
-                    ) {
-                        Text("Chat with Organizer")
+                    if (status == "pending") {
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+                            Box(Modifier.weight(1f)) {
+                                BookingActionButton(
+                                    "Accept",
+                                    containerColor = Color(0xFF34C759),
+                                    contentColor = Color.White
+                                ) { onAccept?.invoke() }
+                            }
+
+                            Box(Modifier.weight(1f)) {
+                                BookingActionButton(
+                                    "Reject",
+                                    isOutlined = true,
+                                    contentColor = Color.Red
+                                ) { onReject?.invoke() }
+                            }
+                        }
                     }
 
-                    Spacer(Modifier.height(8.dp))
+                    if (status != "cancelled" && status != "rejected") {
 
-                    // ✅ NEW BUTTON (Caterer)
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { onTrackPreparation?.invoke() }
-                    ) {
-                        Text("Update Preparation")
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+                            Box(Modifier.weight(1f)) {
+                                BookingActionButton("Chat", isOutlined = true) {
+                                    onChat?.invoke()
+                                }
+                            }
+
+                            Box(Modifier.weight(1f)) {
+                                BookingActionButton(
+                                    "Predict Food",
+                                    containerColor = Color.Black,
+                                    contentColor = Color.White
+                                ) {
+                                    onPredictFood?.invoke()
+                                }
+                            }
+                        }
                     }
                 }
             }
+        }
+    }
+}
 
-            if (expanded) {
-                Spacer(Modifier.height(12.dp))
-                HorizontalDivider()
-                Spacer(Modifier.height(8.dp))
+@Composable
+fun BookingInfoBox(label: String, value: String) {
 
-                booking.items.forEach { item ->
-                    Text("${item.item_name} x${item.quantity} - ₹${item.price}")
-                    Spacer(Modifier.height(4.dp))
-                }
-            }
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+        Text(label, fontSize = 12.sp, color = Color.Gray)
+
+        Text(
+            value,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+fun BookingActionButton(
+    text: String,
+    containerColor: Color = Color.Transparent,
+    contentColor: Color = Color.Black,
+    isOutlined: Boolean = false,
+    onClick: () -> Unit
+) {
+
+    if (isOutlined) {
+
+        OutlinedButton(
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(8.dp),
+            border = BorderStroke(1.dp, Color.LightGray)
+        ) {
+
+            Text(text)
+        }
+
+    } else {
+
+        Button(
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(8.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = containerColor,
+                contentColor = contentColor
+            )
+        ) {
+
+            Text(text)
         }
     }
 }

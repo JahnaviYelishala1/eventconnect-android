@@ -1,6 +1,5 @@
 package com.example.eventconnect.ui.auth
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,13 +8,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.eventconnect.R
 
 @Composable
 fun LoginScreen(
@@ -37,7 +34,7 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF6EED2)),
+            .background(Color.White), // Classic white background
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -47,59 +44,85 @@ fun LoginScreen(
                 .padding(horizontal = 24.dp)
         ) {
             Spacer(Modifier.height(40.dp))
-            Image(
-                painter = painterResource(R.drawable.eventeats_logo),
-                contentDescription = "Logo",
-                modifier = Modifier.size(70.dp)
-            )
-            Spacer(Modifier.height(16.dp))
             Text(
-                text = "Login",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
+                text = "Log In",
+                fontSize = 36.sp,
+                fontWeight = FontWeight.Normal,
                 color = Color.Black
             )
             Spacer(Modifier.height(32.dp))
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Enter your Email ID") },
-                shape = RoundedCornerShape(16.dp),
+                placeholder = { Text("Email address", color = Color.Gray) },
+                shape = RoundedCornerShape(24.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White, RoundedCornerShape(16.dp))
+                    .background(
+                        Color.White,
+                        RoundedCornerShape(24.dp)
+                    ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color(0xFF7B2FF2),
+                    focusedBorderColor = Color(0xFF7B2FF2),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
+                    cursorColor = Color.Black
+                )
             )
             Spacer(Modifier.height(16.dp))
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Enter your password") },
+                placeholder = { Text("Password", color = Color.Gray) },
                 visualTransformation = PasswordVisualTransformation(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(24.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFF6EED2), RoundedCornerShape(16.dp))
+                    .background(
+                        Color.White,
+                        RoundedCornerShape(24.dp)
+                    ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color(0xFF7B2FF2),
+                    focusedBorderColor = Color(0xFF7B2FF2),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
+                    cursorColor = Color.Black
+                )
             )
             Spacer(Modifier.height(32.dp))
             Button(
                 onClick = { authViewModel.login(email, password) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(12.dp),
+                    .height(56.dp),
+                shape = RoundedCornerShape(32.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF6B7C6F)
+                    containerColor = Color(0xFF7B2FF2)
                 )
             ) {
-                Text("Login", fontSize = 18.sp, color = Color.White)
+                Text("Log in", fontSize = 24.sp, color = Color.White)
             }
-            Spacer(Modifier.height(16.dp))
-            TextButton(onClick = onNavigateToSignup) {
+            Spacer(Modifier.height(32.dp))
+            HorizontalDivider(color = Color(0xFF7B2FF2), thickness = 1.dp)
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
                 Text(
-                    "Already have an account ? Signup",
+                    "Already have an account ? ",
                     color = Color.Black,
-                    fontSize = 14.sp
+                    fontSize = 16.sp
                 )
+                TextButton(onClick = onNavigateToSignup) {
+                    Text(
+                        "Sign in",
+                        color = Color(0xFF7B2FF2),
+                        fontSize = 16.sp
+                    )
+                }
             }
             authState?.let {
                 if (it != "SUCCESS") {

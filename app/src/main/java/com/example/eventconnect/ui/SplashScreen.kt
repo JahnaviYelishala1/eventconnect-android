@@ -19,20 +19,28 @@ fun SplashScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5DC)),
+            .background(
+                androidx.compose.ui.graphics.Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF7B2FF2), // Top purple
+                        Color(0xFF9F5FFF)  // Bottom purple
+                    )
+                )
+            ),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Image(
-                painter = painterResource(id = R.drawable.eventeats_logo), // Placeholder logo
+                painter = painterResource(id = R.drawable.eventconnect_logo),
                 contentDescription = "EventConnect Logo",
                 modifier = Modifier.size(150.dp)
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
             Text(
-                text = "EventConnect",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
+                text = "EevntConnect",
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
             )
         }
     }

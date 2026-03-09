@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="150dp"
+    android:height="150dp"
+    android:viewportWidth="150"
+    android:viewportHeight="150">
+    <!-- You can use your logo SVG converted to vector here, or reference the existing logo -->
+    <!-- For now, placeholder circle and icon -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M75,10a65,65 0 1,0 0,130a65,65 0 1,0 0,-130"/>
+    <path
+        android:fillColor="#7B2FF2"
+        android:pathData="M45,60a10,10 0 1,1 20,0a10,10 0 1,1 -20,0M85,60a10,10 0 1,1 20,0a10,10 0 1,1 -20,0M55,70v40h10v-40M95,70v40h10v-40M65,110h30v10h-30z"/>
+</vector>

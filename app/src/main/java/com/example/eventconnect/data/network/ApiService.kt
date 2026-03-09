@@ -29,13 +29,6 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Response<Map<String, String>>
 
-    // 🔹 Prediction ONLY (no DB save)
-    @POST("api/events/predict-food")
-    suspend fun predictFood(
-        @Header("Authorization") token: String,
-        @Body request: FoodPredictionRequest
-    ): Response<FoodPredictionResponse>
-
     // 🔹 CREATE EVENT + SAVE TO DB (THIS WAS MISSING)
     @POST("api/events")
     suspend fun createEvent(
@@ -47,6 +40,12 @@ interface ApiService {
     suspend fun getMyEvents(
         @Header("Authorization") token: String
     ): Response<List<EventResponse>>
+
+    @GET("api/events/{eventId}")
+    suspend fun getEventDetails(
+        @Header("Authorization") token: String,
+        @Path("eventId") eventId: Int
+    ): Response<EventResponse>
 
     @PATCH("api/events/{eventId}/complete")
     suspend fun completeEvent(
@@ -228,6 +227,12 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Response<List<BookingResponse>>
 
+    @GET("api/bookings/{bookingId}")
+    suspend fun getBookingDetails(
+        @Header("Authorization") token: String,
+        @Path("bookingId") bookingId: Int
+    ): Response<BookingResponse>
+
     @PUT("api/bookings/{bookingId}/status")
     suspend fun updateBookingStatus(
         @Header("Authorization") token: String,
@@ -329,5 +334,11 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("bookingId") bookingId: Int
     ): Response<PreparationStatusResponse>
+
+    @POST("api/predict-food")
+    suspend fun predictFood(
+        @Header("Authorization") token: String,
+        @Body request: FoodPredictionRequest
+    ): Response<FoodPredictionResponse>
 
 }
