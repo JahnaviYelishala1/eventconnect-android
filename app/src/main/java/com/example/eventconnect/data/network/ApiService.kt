@@ -335,7 +335,7 @@ interface ApiService {
         @Path("bookingId") bookingId: Int
     ): Response<PreparationStatusResponse>
 
-    @POST("api/predict-food")
+    @POST("api/predict-food/")
     suspend fun predictFood(
         @Header("Authorization") token: String,
         @Body request: FoodPredictionRequest

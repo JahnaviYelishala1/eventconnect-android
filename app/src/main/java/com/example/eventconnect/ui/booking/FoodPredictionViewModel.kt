@@ -44,42 +44,69 @@ class FoodPredictionViewModel : ViewModel() {
                 val token = user.getIdToken(false).await().token!!
                 val authHeader = "Bearer $token"
 
-                // 1. Get Booking Details
-                val bookingResponse = RetrofitClient.apiService.getBookingDetails(authHeader, bookingId)
+                // 1️⃣ Get Booking Details
+                val bookingResponse =
+                    RetrofitClient.apiService.getBookingDetails(
+                        authHeader,
+                        bookingId
+                    )
+
                 if (!bookingResponse.isSuccessful) {
                     _error.value = "Failed to fetch booking details"
                     return@launch
                 }
+
                 val booking = bookingResponse.body()!!
 
-                // 2. Get Event Details
-                val eventResponse = RetrofitClient.apiService.getEventDetails(authHeader, booking.event_id)
+                // 2️⃣ Get Event Details
+                val eventResponse =
+                    RetrofitClient.apiService.getEventDetails(
+                        authHeader,
+                        booking.event_id
+                    )
+
                 if (!eventResponse.isSuccessful) {
                     _error.value = "Failed to fetch event details"
                     return@launch
                 }
+
                 val event = eventResponse.body()!!
 
-                // 3. Get Menu to find categories
-                val menuResponse = RetrofitClient.apiService.getCatererMenu(authHeader, booking.caterer_id)
-                val menuItems = if (menuResponse.isSuccessful) menuResponse.body() ?: emptyList() else emptyList()
-                val categoryMap = menuItems.associateBy({ it.item_name }, { it.category })
+                // 3️⃣ Get Caterer Menu (to fetch category + food_type)
+                val menuResponse =
+                    RetrofitClient.apiService.getCatererMenu(
+                        authHeader,
+                        booking.caterer_id
+                    )
 
-                // 4. Prepare Request
+                val menuItems =
+                    if (menuResponse.isSuccessful)
+                        menuResponse.body() ?: emptyList()
+                    else emptyList()
+
+                // Map menu items by name
+                val menuMap = menuItems.associateBy { it.item_name }
+
+                // 4️⃣ Prepare prediction items
                 val predictionItems = booking.items.map { item ->
+
+                    val menu = menuMap[item.item_name]
+
                     MenuItemPrediction(
                         name = item.item_name,
-                        category = categoryMap[item.item_name] ?: "Main Course"
+                        category = menu?.category ?: "main",
+                        food_type = menu?.food_type ?: "veg"
                     )
                 }
 
+                // 5️⃣ Build request
                 val request = FoodPredictionRequest(
                     attendees = booking.attendees ?: 0,
-                    event_type = event.event_type,
                     meal_type = event.meal_style,
                     items = predictionItems
                 )
 
+                // 6️⃣ Call prediction API
                 val response =
                     RetrofitClient.apiService.predictFood(
                         authHeader,

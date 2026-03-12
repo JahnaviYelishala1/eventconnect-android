@@ -1,13 +1,13 @@
 package com.example.eventconnect.data.network
 
-class MenuItemPrediction(
+data class MenuItemPrediction(
     val name: String,
-    val category: String
+    val category: String,
+    val food_type: String
 )
 
-class FoodPredictionRequest(
+data class FoodPredictionRequest(
     val attendees: Int,
-    val event_type: String,
     val meal_type: String,
     val items: List<MenuItemPrediction>
 )
