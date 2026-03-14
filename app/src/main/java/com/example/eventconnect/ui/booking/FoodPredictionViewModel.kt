@@ -84,18 +84,37 @@ class FoodPredictionViewModel : ViewModel() {
                         menuResponse.body() ?: emptyList()
                     else emptyList()
 
-                // Map menu items by name
-                val menuMap = menuItems.associateBy { it.item_name }
+                // Map menu items by id for robust lookup
+                val menuMap = menuItems.associateBy { it.id }
 
-                // 4️⃣ Prepare prediction items
+                // Helper to normalize category
+                fun normalizeCategory(category: String?): String {
+                    return when (category?.trim()?.lowercase()) {
+                        "starter" -> "starter"
+                        "main course", "main", "maincourse" -> "main_course"
+                        "dessert", "sweet" -> "dessert"
+                        "beverage", "beverages", "drink" -> "beverages"
+                        "snack", "snacks" -> "snacks"
+                        else -> "main_course"
+                    }
+                }
+
+                // Helper to normalize food_type
+                fun normalizeFoodType(foodType: String?): String {
+                    return when (foodType?.trim()?.lowercase()) {
+                        "veg", "vegetarian" -> "veg"
+                        "nonveg", "non-veg", "non vegetarian", "nonvegetarian" -> "non-veg"
+                        else -> "veg"
+                    }
+                }
+
+                // 4️⃣ Prepare prediction items using menu_id
                 val predictionItems = booking.items.map { item ->
-
-                    val menu = menuMap[item.item_name]
-
+                    val menu = menuMap[item.menu_id]
                     MenuItemPrediction(
                         name = item.item_name,
-                        category = menu?.category ?: "main",
-                        food_type = menu?.food_type ?: "veg"
+                        category = normalizeCategory(menu?.category),
+                        food_type = normalizeFoodType(menu?.food_type)
                     )
                 }
 

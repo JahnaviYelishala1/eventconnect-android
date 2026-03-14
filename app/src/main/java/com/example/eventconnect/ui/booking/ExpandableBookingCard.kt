@@ -143,6 +143,7 @@ fun ExpandableBookingCard(
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
 
+                // ---------------- ORGANIZER ACTIONS ----------------
                 if (!showActions) {
 
                     if (status == "accepted") {
@@ -190,6 +191,7 @@ fun ExpandableBookingCard(
                     }
                 }
 
+                // ---------------- CATERER ACTIONS ----------------
                 else {
 
                     if (status == "pending") {
@@ -216,21 +218,37 @@ fun ExpandableBookingCard(
 
                     if (status != "cancelled" && status != "rejected") {
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
 
-                            Box(Modifier.weight(1f)) {
-                                BookingActionButton("Chat", isOutlined = true) {
-                                    onChat?.invoke()
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+                                Box(Modifier.weight(1f)) {
+                                    BookingActionButton("Chat", isOutlined = true) {
+                                        onChat?.invoke()
+                                    }
+                                }
+
+                                Box(Modifier.weight(1f)) {
+                                    BookingActionButton(
+                                        "Predict Food",
+                                        containerColor = Color.Black,
+                                        contentColor = Color.White
+                                    ) {
+                                        onPredictFood?.invoke()
+                                    }
                                 }
                             }
 
-                            Box(Modifier.weight(1f)) {
-                                BookingActionButton(
-                                    "Predict Food",
-                                    containerColor = Color.Black,
-                                    contentColor = Color.White
-                                ) {
-                                    onPredictFood?.invoke()
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+                                Box(Modifier.weight(1f)) {
+                                    BookingActionButton(
+                                        "Update Preparation",
+                                        containerColor = Color(0xFF007AFF),
+                                        contentColor = Color.White
+                                    ) {
+                                        onTrackPreparation?.invoke()
+                                    }
                                 }
                             }
                         }
@@ -273,7 +291,6 @@ fun BookingActionButton(
             shape = RoundedCornerShape(8.dp),
             border = BorderStroke(1.dp, Color.LightGray)
         ) {
-
             Text(text)
         }
 
@@ -288,7 +305,6 @@ fun BookingActionButton(
                 contentColor = contentColor
             )
         ) {
-
             Text(text)
         }
     }

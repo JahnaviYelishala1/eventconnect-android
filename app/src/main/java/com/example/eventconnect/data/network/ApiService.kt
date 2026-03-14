@@ -341,4 +341,22 @@ interface ApiService {
         @Body request: FoodPredictionRequest
     ): Response<FoodPredictionResponse>
 
+    @POST("api/surplus/send-alert")
+    suspend fun sendSurplusAlert(
+        @Header("Authorization") token: String,
+        @Body request: SurplusCreateRequest
+    ): Response<SurplusResponse>
+
+    @POST("api/surplus/{requestId}/accept")
+    suspend fun acceptSurplus(
+        @Header("Authorization") token: String,
+        @Path("requestId") requestId: Int
+    ): Response<Map<String,String>>
+
+    @GET("api/surplus/{requestId}/accepted-ngo")
+    suspend fun getAcceptedNGO(
+        @Header("Authorization") token: String,
+        @Path("requestId") requestId: Int
+    ): Response<SurplusNGOResponse>
+
 }
