@@ -1,35 +1,35 @@
 package com.example.eventconnect.websocket
 
 import okhttp3.*
+import org.json.JSONObject
 
 class ChatWebSocketManager(
-    private val bookingId: Int,
+    private val requestId: Int,
     private val token: String,
+    private val senderId: Int,
+    private val senderRole: String,
     private val onMessageReceived: (String) -> Unit
 ) {
-
+    private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
 
     fun connect() {
-
         val request = Request.Builder()
-            .url("wss://casemated-supercongested-loan.ngrok-free.dev/ws/chat/$bookingId?token=$token")
+            .url("ws://YOUR_NGROK_URL/api/chat/ws/$requestId")
             .build()
-
-        val client = OkHttpClient()
-
-        webSocket = client.newWebSocket(request,
-            object : WebSocketListener() {
-
-                override fun onMessage(webSocket: WebSocket, text: String) {
-                    onMessageReceived(text)
-                }
-            })
+        webSocket = client.newWebSocket(request, object : WebSocketListener() {
+            override fun onMessage(webSocket: WebSocket, text: String) {
+                onMessageReceived(text)
+            }
+        })
     }
 
-    fun sendMessage(message: String) {
-        val json = """{"message":"$message"}"""
-        webSocket?.send(json)
+    fun sendMessage(text: String) {
+        val json = JSONObject()
+        json.put("message", text)
+        json.put("sender_id", senderId)
+        json.put("sender_role", senderRole)
+        webSocket?.send(json.toString())
     }
 
     fun disconnect() {

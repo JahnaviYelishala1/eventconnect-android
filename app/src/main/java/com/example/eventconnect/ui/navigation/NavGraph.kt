@@ -40,6 +40,12 @@ sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: 
 
     object NgoHome : BottomNavItem("ngo-home", Icons.Default.Home, "Home")
     object NgoProfile : BottomNavItem("ngo-profile", Icons.Default.AccountCircle, "Profile")
+
+    object NgoAccepted : BottomNavItem(
+        "ngo-accepted-requests",
+        Icons.Default.List,
+        "Requests"
+    )
 }
 
 @Composable
@@ -66,7 +72,9 @@ fun NavGraph() {
 
     val ngoRoutes = listOf(
         BottomNavItem.NgoHome.route,
+        BottomNavItem.NgoAccepted.route,
         BottomNavItem.NgoProfile.route
+
     )
 
     Scaffold(
@@ -160,6 +168,7 @@ fun NavGraph() {
 
                         listOf(
                             BottomNavItem.NgoHome,
+                            BottomNavItem.NgoAccepted,
                             BottomNavItem.NgoProfile
                         ).forEach { item ->
 
@@ -242,15 +251,13 @@ fun NavGraph() {
             /* -------- CHAT -------- */
 
             composable(
-                route = "chat/{bookingId}",
+                route = "chat/{requestId}",
                 arguments = listOf(
-                    navArgument("bookingId") { type = NavType.IntType }
+                    navArgument("requestId") { type = NavType.IntType }
                 )
             ) {
-
-                val bookingId = it.arguments?.getInt("bookingId")!!
-
-                ChatScreen(bookingId)
+                val requestId = it.arguments?.getInt("requestId")!!
+                com.example.eventconnect.ui.chat.ChatScreen(requestId)
             }
 
             /* -------- FOOD PREDICTION -------- */
@@ -389,7 +396,7 @@ fun NavGraph() {
             }
 
             composable("ngo-accepted-requests") {
-                AcceptedRequestsScreen()
+                AcceptedRequestsScreen(navController = navController)
             }
         }
     }

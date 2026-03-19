@@ -315,10 +315,10 @@ interface ApiService {
         @Path("booking_id") bookingId: Int
     ): Response<ResponseBody>
 
-    @GET("api/chat/{bookingId}")
+    @GET("api/chat/{requestId}")
     suspend fun getChatHistory(
         @Header("Authorization") token: String,
-        @Path("bookingId") bookingId: Int
+        @Path("requestId") requestId: Int
     ): Response<List<ChatMessageResponse>>
 
     @PUT("api/bookings/{bookingId}/preparation-status")

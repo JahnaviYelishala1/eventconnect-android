@@ -13,7 +13,7 @@ import kotlinx.coroutines.tasks.await
 import org.json.JSONObject
 
 class ChatViewModel(
-    private val bookingId: Int
+    private val requestId: Int
 ) : ViewModel() {
 
     private val _messages =
@@ -31,7 +31,7 @@ class ChatViewModel(
             val user = FirebaseAuth.getInstance().currentUser!!
             val token = user.getIdToken(false).await().token!!
 
-            // 🔹 Fetch current DB user id
+            // Get current user ID
             val profile = RetrofitClient.apiService
                 .protectedCall("Bearer $token")
 
@@ -39,9 +39,9 @@ class ChatViewModel(
                 currentUserId = profile.body()?.id
             }
 
-            // 🔹 Load chat history
+            // 🔥 FIX: use requestId
             val response = RetrofitClient.apiService
-                .getChatHistory("Bearer $token", bookingId)
+                .getChatHistory("Bearer $token", requestId)
 
             if (response.isSuccessful) {
                 _messages.value = response.body() ?: emptyList()
@@ -56,27 +56,25 @@ class ChatViewModel(
             val token = user.getIdToken(false).await().token!!
 
             socketManager = ChatWebSocketManager(
-                bookingId,
-                token
-            ) { message ->
-
-                val json = JSONObject(message)
-
-                val newMessage = ChatMessageResponse(
-                    sender_id = json.getInt("sender_id"),
-                    message = json.getString("message"),
-                    timestamp = json.getString("timestamp")
-                )
-
-                _messages.value = _messages.value + newMessage
-            }
-
+                requestId = requestId,
+                token = token,
+                senderId = currentUserId ?: 0,
+                senderRole = "ngo", // or "organizer"
+                onMessageReceived = { message ->
+                    val json = JSONObject(message)
+                    val newMessage = ChatMessageResponse(
+                        sender_id = json.getInt("sender_id"),
+                        message = json.getString("message"),
+                        timestamp = json.getString("timestamp")
+                    )
+                    _messages.value = _messages.value + newMessage
+                }
+            )
             socketManager?.connect()
         }
     }
 
     fun sendMessage(text: String) {
-        if (text.isBlank()) return
         socketManager?.sendMessage(text)
     }
 
