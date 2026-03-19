@@ -136,7 +136,7 @@ interface ApiService {
     ): Response<ApiMessage>
 
     @Multipart
-    @POST("api/ngos/upload-image")  // ✅ matches backend
+    @POST("api/ngos/upload-image")
     suspend fun uploadNgoImage(
         @Header("Authorization") token: String,
         @Part file: MultipartBody.Part
@@ -166,7 +166,6 @@ interface ApiService {
         @Part file: MultipartBody.Part
     ): Response<ImageUploadResponse>
 
-    // ---------------- ORGANIZER PROFILE ----------------
 
     @GET("api/organizers/profile")
     suspend fun getOrganizerProfile(
@@ -341,22 +340,41 @@ interface ApiService {
         @Body request: FoodPredictionRequest
     ): Response<FoodPredictionResponse>
 
+    // Surplus Alert APIs
     @POST("api/surplus/send-alert")
     suspend fun sendSurplusAlert(
         @Header("Authorization") token: String,
-        @Body request: SurplusCreateRequest
-    ): Response<SurplusResponse>
+        @Body request: SurplusAlertRequest
+    ): Response<SurplusAlertResponse>
 
     @POST("api/surplus/{requestId}/accept")
     suspend fun acceptSurplus(
         @Header("Authorization") token: String,
         @Path("requestId") requestId: Int
-    ): Response<Map<String,String>>
+    ): Response<ApiMessage>
+
+    @POST("api/surplus/{requestId}/reject")
+    suspend fun rejectSurplus(
+        @Header("Authorization") token: String,
+        @Path("requestId") requestId: Int
+    ): Response<ApiMessage>
 
     @GET("api/surplus/{requestId}/accepted-ngo")
-    suspend fun getAcceptedNGO(
+    suspend fun getAcceptedNgo(
         @Header("Authorization") token: String,
         @Path("requestId") requestId: Int
     ): Response<SurplusNGOResponse>
+
+    @GET("api/surplus/{requestId}/nearby-ngos")
+    suspend fun getNearbyNgos(
+        @Header("Authorization") token: String,
+        @Path("requestId") requestId: Int
+    ): Response<List<SurplusNGOResponse>>
+
+    @GET("api/surplus/my-accepted")
+    suspend fun getMyAcceptedRequests(
+        @Header("Authorization") token: String
+    ): Response<List<AcceptedRequestResponse>>
+
 
 }

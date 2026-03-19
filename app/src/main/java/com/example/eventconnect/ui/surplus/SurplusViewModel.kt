@@ -4,7 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.eventconnect.data.network.SurplusNGOResponse
 import com.example.eventconnect.data.network.RetrofitClient
-import com.example.eventconnect.data.network.SurplusCreateRequest
+import com.example.eventconnect.data.network.SurplusAlertResponse
+import com.example.eventconnect.data.network.SurplusAlertRequest
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,32 +30,24 @@ class SurplusViewModel : ViewModel() {
         latitude: Double,
         longitude: Double
     ) {
-
         viewModelScope.launch {
-
             try {
-
                 val user = FirebaseAuth.getInstance().currentUser!!
                 val token = user.getIdToken(false).await().token!!
-
-                val request = SurplusCreateRequest(
+                val request = SurplusAlertRequest(
                     event_id = eventId,
-                    food_description = description,
-                    image_url = imageUrl,
+                    description = description,
+                    image_url = imageUrl.takeIf { it.isNotBlank() },
                     latitude = latitude,
                     longitude = longitude
                 )
-
                 val response = RetrofitClient.apiService.sendSurplusAlert(
                     "Bearer $token",
                     request
                 )
-
                 if (response.isSuccessful) {
-
                     _success.value = true
-
-                    requestId = response.body()?.id
+                    requestId = response.body()?.request_id
 
                     startPolling()
                 }
@@ -86,11 +79,10 @@ class SurplusViewModel : ViewModel() {
             val token = user.getIdToken(false).await().token!!
 
             val response =
-                RetrofitClient.apiService.getAcceptedNGO(
+                RetrofitClient.apiService.getAcceptedNgo(
                     "Bearer $token",
                     requestId
                 )
-
             if (response.isSuccessful && response.body() != null) {
 
                 _acceptedNgo.value = response.body()

@@ -371,6 +371,26 @@ fun NavGraph() {
             composable("admin-ngo-review") {
                 AdminNgoReviewScreen(navController)
             }
+
+            composable(
+                "send-surplus/{eventId}/{lat}/{lng}"
+            ) { backStackEntry ->
+
+                val eventId = backStackEntry.arguments?.getString("eventId")!!.toInt()
+                val lat = backStackEntry.arguments?.getString("lat")!!.toDouble()
+                val lng = backStackEntry.arguments?.getString("lng")!!.toDouble()
+
+                SendSurplusScreen(
+                    navController,
+                    eventId,
+                    lat,
+                    lng
+                )
+            }
+
+            composable("ngo-accepted-requests") {
+                AcceptedRequestsScreen()
+            }
         }
     }
 }
