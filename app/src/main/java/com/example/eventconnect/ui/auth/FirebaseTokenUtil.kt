@@ -13,7 +13,7 @@ fun getFirebaseIdToken(
         return
     }
 
-    user.getIdToken(false)
+    user.getIdToken(true)
         .addOnSuccessListener { result ->
             onTokenReceived(result.token!!)
         }

@@ -111,8 +111,10 @@ fun SendSurplusScreen(
 
             if (success) {
 
-                LaunchedEffect(true) {
-                    navController.navigate("waiting-ngo")
+                LaunchedEffect(success) {
+                    viewModel.requestId?.let { reqId ->
+                        navController.navigate("waiting-ngo/$reqId")
+                    }
                 }
 
                 Text(

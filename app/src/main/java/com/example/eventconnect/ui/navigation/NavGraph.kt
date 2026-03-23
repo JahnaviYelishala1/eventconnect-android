@@ -24,6 +24,7 @@ import com.example.eventconnect.ui.revenue.RevenueScreen
 import com.example.eventconnect.ui.payment.PaymentHistoryScreen
 import com.example.eventconnect.ui.preparation.*
 import com.example.eventconnect.ui.surplus.*
+import com.example.eventconnect.ui.ai.AiChatScreen
 import com.google.firebase.auth.FirebaseAuth
 
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
@@ -257,7 +258,7 @@ fun NavGraph() {
                 )
             ) {
                 val requestId = it.arguments?.getInt("requestId")!!
-                com.example.eventconnect.ui.chat.ChatScreen(requestId)
+                com.example.eventconnect.ui.chat.ChatScreen(requestId = requestId)
             }
 
             /* -------- FOOD PREDICTION -------- */
@@ -320,7 +321,21 @@ fun NavGraph() {
             }
 
             composable("waiting-for-ngo") {
-                WaitingForNGOScreen()
+                WaitingForNGOScreen(navController = navController)
+            }
+
+            composable(
+                route = "waiting-ngo/{requestId}",
+                arguments = listOf(
+                    navArgument("requestId") { type = NavType.IntType }
+                )
+            ) { backStackEntry ->
+                val requestId = backStackEntry.arguments?.getInt("requestId")!!
+
+                WaitingForNGOScreen(
+                    navController = navController,
+                    requestId = requestId
+                )
             }
 
             /* -------- CATERER -------- */
@@ -397,6 +412,77 @@ fun NavGraph() {
 
             composable("ngo-accepted-requests") {
                 AcceptedRequestsScreen(navController = navController)
+            }
+
+            composable(
+                route = "surplus-location/{lat}/{lng}",
+                arguments = listOf(
+                    navArgument("lat") { type = NavType.StringType },
+                    navArgument("lng") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val lat = backStackEntry.arguments?.getString("lat")!!.toDouble()
+                val lng = backStackEntry.arguments?.getString("lng")!!.toDouble()
+
+                SurplusLocationMapScreen(
+                    navController = navController,
+                    latitude = lat,
+                    longitude = lng
+                )
+            }
+
+            composable(
+                route = "ai-chat/{bookingId}",
+                arguments = listOf(navArgument("bookingId") { type = NavType.IntType })
+            ) {
+                val bookingId = it.arguments?.getInt("bookingId")!!
+                AiChatScreen(bookingId = bookingId)
+            }
+
+            composable(
+                route = "find-caterer/{eventId}/{attendees}",
+                arguments = listOf(
+                    navArgument("eventId") { type = NavType.IntType },
+                    navArgument("attendees") { type = NavType.IntType }
+                )
+            ) {
+                val eventId = it.arguments?.getInt("eventId")!!
+                val attendees = it.arguments?.getInt("attendees")!!
+
+                FindCatererScreen(
+                    navController = navController,
+                    eventId = eventId,
+                    attendees = attendees
+                )
+            }
+
+            composable(
+                route = "caterer_menu/{eventId}/{catererId}/{attendees}/{selectedFoodType}/{minPrice}/{maxPrice}",
+                arguments = listOf(
+                    navArgument("eventId") { type = NavType.IntType },
+                    navArgument("catererId") { type = NavType.IntType },
+                    navArgument("attendees") { type = NavType.IntType },
+                    navArgument("selectedFoodType") { type = NavType.StringType },
+                    navArgument("minPrice") { type = NavType.IntType },
+                    navArgument("maxPrice") { type = NavType.IntType }
+                )
+            ) {
+                val eventId = it.arguments?.getInt("eventId")!!
+                val catererId = it.arguments?.getInt("catererId")!!
+                val attendees = it.arguments?.getInt("attendees")!!
+                val selectedFoodType = it.arguments?.getString("selectedFoodType")!!
+                val minPrice = it.arguments?.getInt("minPrice")!!
+                val maxPrice = it.arguments?.getInt("maxPrice")!!
+
+                CatererMenuScreen(
+                    eventId = eventId,
+                    catererId = catererId,
+                    attendees = attendees,
+                    selectedFoodType = selectedFoodType,
+                    minPrice = minPrice,
+                    maxPrice = maxPrice,
+                    navController = navController
+                )
             }
         }
     }

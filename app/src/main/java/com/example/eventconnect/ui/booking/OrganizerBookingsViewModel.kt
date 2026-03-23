@@ -14,6 +14,7 @@ import kotlinx.coroutines.tasks.await
 import okhttp3.ResponseBody
 import org.json.JSONObject
 import retrofit2.Response
+import com.example.eventconnect.utils.getAuthHeader
 
 class OrganizerBookingsViewModel : ViewModel() {
 
@@ -56,12 +57,12 @@ class OrganizerBookingsViewModel : ViewModel() {
                 _loading.value = true
                 _error.value = null
 
-                val user = FirebaseAuth.getInstance().currentUser!!
-                val token = user.getIdToken(false).await().token!!
+                if (FirebaseAuth.getInstance().currentUser == null) return@launch
+                val authHeader = getAuthHeader() ?: return@launch
 
                 val response: Response<List<BookingResponse>> =
                     RetrofitClient.apiService.getOrganizerBookings(
-                        "Bearer $token"
+                        authHeader
                     )
 
                 if (response.isSuccessful) {
@@ -81,11 +82,11 @@ class OrganizerBookingsViewModel : ViewModel() {
     fun cancelBooking(bookingId: Int) {
         viewModelScope.launch {
             try {
-                val user = FirebaseAuth.getInstance().currentUser!!
-                val token = user.getIdToken(false).await().token!!
+                if (FirebaseAuth.getInstance().currentUser == null) return@launch
+                val authHeader = getAuthHeader() ?: return@launch
 
                 RetrofitClient.apiService.updateBookingStatus(
-                    "Bearer $token",
+                    authHeader,
                     bookingId,
                     "cancelled"
                 )
@@ -103,19 +104,31 @@ class OrganizerBookingsViewModel : ViewModel() {
         onUrlReady: (String) -> Unit
     ) {
         viewModelScope.launch {
+            if (FirebaseAuth.getInstance().currentUser == null) return@launch
+            val authHeader = getAuthHeader() ?: return@launch
+
+            val response = RetrofitClient.apiService
+                .createCheckoutSession(authHeader, bookingId)
+
+            if (response.isSuccessful) {
+                response.body()?.checkout_url?.let { onUrlReady(it) }
+            }
+        }
+    }
+
+    fun confirmPaymentSuccess(bookingId: Int) {
+        viewModelScope.launch {
             try {
-                val user = FirebaseAuth.getInstance().currentUser!!
-                val token = user.getIdToken(false).await().token!!
+                if (FirebaseAuth.getInstance().currentUser == null) return@launch
+                val authHeader = getAuthHeader() ?: return@launch
 
                 val response = RetrofitClient.apiService
-                    .createCheckoutSession("Bearer $token", bookingId)
+                    .paymentSuccess(authHeader, bookingId)
 
                 if (response.isSuccessful) {
-                    response.body()?.checkout_url?.let {
-                        onUrlReady(it)
-                    }
+                    loadBookings()
                 } else {
-                    _error.value = "Payment session failed"
+                    _error.value = "Payment confirmation failed"
                 }
 
             } catch (e: Exception) {
@@ -130,11 +143,11 @@ class OrganizerBookingsViewModel : ViewModel() {
     ) {
         viewModelScope.launch {
             try {
-                val user = FirebaseAuth.getInstance().currentUser!!
-                val token = user.getIdToken(false).await().token!!
+                if (FirebaseAuth.getInstance().currentUser == null) return@launch
+                val authHeader = getAuthHeader() ?: return@launch
 
                 val response = RetrofitClient.apiService
-                    .getPaymentDetails("Bearer $token", bookingId)
+                    .getPaymentDetails(authHeader, bookingId)
 
                 if (response.isSuccessful) {
                     onResult(response.body())
@@ -151,11 +164,11 @@ class OrganizerBookingsViewModel : ViewModel() {
     fun refundBooking(bookingId: Int) {
         viewModelScope.launch {
             try {
-                val user = FirebaseAuth.getInstance().currentUser!!
-                val token = user.getIdToken(false).await().token!!
+                if (FirebaseAuth.getInstance().currentUser == null) return@launch
+                val authHeader = getAuthHeader() ?: return@launch
 
                 val response = RetrofitClient.apiService.refundPayment(
-                    "Bearer $token",
+                    authHeader,
                     bookingId
                 )
 
@@ -193,11 +206,11 @@ class OrganizerBookingsViewModel : ViewModel() {
     ) {
         viewModelScope.launch {
             try {
-                val user = FirebaseAuth.getInstance().currentUser!!
-                val token = user.getIdToken(false).await().token!!
+                if (FirebaseAuth.getInstance().currentUser == null) return@launch
+                val authHeader = getAuthHeader() ?: return@launch
 
                 val response = RetrofitClient.apiService
-                    .downloadInvoice("Bearer $token", bookingId)
+                    .downloadInvoice(authHeader, bookingId)
 
                 if (response.isSuccessful) {
                     response.body()?.let { body ->

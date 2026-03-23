@@ -7,10 +7,16 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,227 +38,220 @@ fun ExpandableBookingCard(
     onDownloadInvoice: (() -> Unit)? = null,
     onChat: (() -> Unit)? = null,
     onTrackPreparation: (() -> Unit)? = null,
-    onPredictFood: (() -> Unit)? = null
+    onPredictFood: (() -> Unit)? = null,
+    onAskAi: (() -> Unit)? = null
 ) {
-
     var expanded by remember { mutableStateOf(false) }
     val status = booking.status.lowercase(Locale.getDefault())
+    
+    val primaryDark = Color(0xFF1A1C1E)
+    val secondaryGray = Color(0xFF6B7280)
+    val purpleAccent = Color(0xFF6C3EF4)
+    val purpleLight = Color(0xFF9F5FFF)
+    val greenStatus = Color(0xFF22C55E)
+    val redStatus = Color(0xFFEF4444)
+    val orangeStatus = Color(0xFFF59E0B)
 
-    Card(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(10.dp, RoundedCornerShape(20.dp), ambientColor = Color.Black.copy(alpha = 0.05f))
+            .clip(RoundedCornerShape(20.dp))
             .clickable { expanded = !expanded },
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        color = Color.White
     ) {
-
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
-
+            // 1. Header Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-
                 Column(modifier = Modifier.weight(1f)) {
-
                     Text(
                         text = booking.event_name ?: "Event",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = primaryDark
                     )
-
                     Text(
-                        text = "Caterer: ${booking.caterer_name ?: "N/A"}",
+                        text = "Organizer: ${booking.caterer_name ?: "N/A"}", // Corrected context
                         fontSize = 14.sp,
-                        color = Color.Gray
+                        color = secondaryGray,
+                        modifier = Modifier.padding(top = 2.dp)
                     )
                 }
 
-                val statusColor = when (status) {
-                    "pending" -> Color(0xFFFF9500)
-                    "accepted" -> Color(0xFF007AFF)
-                    "paid" -> Color(0xFF34C759)
-                    "rejected", "cancelled" -> Color(0xFFFF3B30)
-                    else -> Color.Gray
+                val (statusText, statusColor) = when (status) {
+                    "pending" -> "PENDING" to orangeStatus
+                    "accepted" -> "ACCEPTED" to Color(0xFF3B82F6)
+                    "paid" -> "PAID" to greenStatus
+                    "rejected", "cancelled" -> status.uppercase() to redStatus
+                    else -> status.uppercase() to secondaryGray
                 }
 
                 Surface(
-                    color = statusColor.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(8.dp)
+                    color = statusColor.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-
                     Text(
-                        text = status.uppercase(),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        text = statusText,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         color = statusColor,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold
                     )
                 }
             }
 
-            HorizontalDivider()
+            Spacer(modifier = Modifier.height(20.dp))
 
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceAround
-            ) {
-                BookingInfoBox("Guests", (booking.attendees ?: 0).toString())
-                BookingInfoBox("Price", "₹${booking.total_price}")
-                BookingInfoBox("Booking ID", "#${booking.id}")
+            // 2. Info Grid Section (2x2 Style)
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    BookingInfoItem("Guests", (booking.attendees ?: 0).toString(), Icons.Default.People, Modifier.weight(1f))
+                    BookingInfoItem("Total Price", "₹${booking.total_price}", Icons.Default.Payments, Modifier.weight(1f))
+                }
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    BookingInfoItem("Booking ID", "#${booking.id}", Icons.Default.Badge, Modifier.weight(1f))
+                    BookingInfoItem("Date", "Oct 24, 2023", Icons.Default.Event, Modifier.weight(1f)) // Placeholder date
+                }
             }
 
-            AnimatedVisibility(visible = expanded) {
+            // 3. Status Highlight for PAID
+            if (status == "paid") {
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(greenStatus.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = greenStatus, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Payment Confirmed & Secured", color = greenStatus, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                }
+            }
 
+            // Expandable Summary Section
+            AnimatedVisibility(visible = expanded) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFF2F2F7), RoundedCornerShape(8.dp))
-                        .padding(12.dp)
-                        .border(1.dp, Color(0xFFE5E5EA), RoundedCornerShape(8.dp))
+                        .padding(top = 20.dp)
+                        .background(Color(0xFFF9FAFB), RoundedCornerShape(16.dp))
+                        .padding(16.dp)
                 ) {
-
-                    Text(
-                        "Order Summary",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-
+                    Text("Order Summary", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = primaryDark)
+                    Spacer(modifier = Modifier.height(12.dp))
                     booking.items.forEach { item ->
-
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 2.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-
-                            Text("${item.item_name} x${item.quantity}")
-
-                            Text("₹${item.price}", fontWeight = FontWeight.Medium)
+                        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("${item.item_name} x${item.quantity}", color = secondaryGray, fontSize = 14.sp)
+                            Text("₹${item.price}", fontWeight = FontWeight.SemiBold, color = primaryDark, fontSize = 14.sp)
                         }
                     }
                 }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Spacer(modifier = Modifier.height(24.dp))
 
-                // ---------------- ORGANIZER ACTIONS ----------------
-                if (!showActions) {
-
-                    if (status == "accepted") {
-
-                        BookingActionButton(
-                            text = "Pay Now",
-                            containerColor = Color.Black,
-                            contentColor = Color.White
-                        ) { onPay?.invoke() }
-                    }
-
-                    if (status == "paid" && paymentDetails != null) {
-
-                        Text(
-                            "Payment Confirmed ✅",
-                            color = Color(0xFF34C759),
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        BookingActionButton("Download Invoice", isOutlined = true) {
-                            onDownloadInvoice?.invoke()
-                        }
-                    }
-
-                    if (status != "cancelled" && status != "rejected") {
-
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-
-                            Box(Modifier.weight(1f)) {
-                                BookingActionButton("Chat", isOutlined = true) {
-                                    onChat?.invoke()
-                                }
-                            }
-
-                            Box(Modifier.weight(1f)) {
-                                BookingActionButton(
-                                    "Track",
-                                    containerColor = Color.Black,
-                                    contentColor = Color.White
-                                ) {
-                                    onTrackPreparation?.invoke()
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // ---------------- CATERER ACTIONS ----------------
-                else {
-
+            // 4. ACTION BUTTONS (Clean Hierarchy)
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (showActions) {
+                    // Caterer Specific Layout
                     if (status == "pending") {
-
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Box(Modifier.weight(1f)) {
-                                BookingActionButton(
-                                    "Accept",
-                                    containerColor = Color(0xFF34C759),
-                                    contentColor = Color.White
-                                ) { onAccept?.invoke() }
+                                ActionButton(
+                                    text = "Accept",
+                                    icon = Icons.Default.Check,
+                                    containerColor = greenStatus,
+                                    onClick = { onAccept?.invoke() }
+                                )
                             }
-
                             Box(Modifier.weight(1f)) {
-                                BookingActionButton(
-                                    "Reject",
-                                    isOutlined = true,
-                                    contentColor = Color.Red
-                                ) { onReject?.invoke() }
+                                ActionButton(
+                                    text = "Reject",
+                                    icon = Icons.Default.Close,
+                                    containerColor = Color.White,
+                                    contentColor = redStatus,
+                                    borderColor = redStatus.copy(alpha = 0.3f),
+                                    onClick = { onReject?.invoke() }
+                                )
                             }
                         }
                     }
 
                     if (status != "cancelled" && status != "rejected") {
-
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-
-                                Box(Modifier.weight(1f)) {
-                                    BookingActionButton("Chat", isOutlined = true) {
-                                        onChat?.invoke()
-                                    }
-                                }
-
-                                Box(Modifier.weight(1f)) {
-                                    BookingActionButton(
-                                        "Predict Food",
-                                        containerColor = Color.Black,
-                                        contentColor = Color.White
-                                    ) {
-                                        onPredictFood?.invoke()
-                                    }
-                                }
+                        // Utility Row
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Box(Modifier.weight(1f)) {
+                                ActionButton(
+                                    text = "Chat",
+                                    icon = Icons.AutoMirrored.Filled.Chat,
+                                    containerColor = Color.White,
+                                    contentColor = purpleAccent,
+                                    borderColor = purpleAccent.copy(alpha = 0.2f),
+                                    onClick = { onChat?.invoke() }
+                                )
                             }
-
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-
-                                Box(Modifier.weight(1f)) {
-                                    BookingActionButton(
-                                        "Update Preparation",
-                                        containerColor = Color(0xFF007AFF),
-                                        contentColor = Color.White
-                                    ) {
-                                        onTrackPreparation?.invoke()
-                                    }
-                                }
+                            Box(Modifier.weight(1f)) {
+                                ActionButton(
+                                    text = "Predict Food",
+                                    icon = Icons.Default.AutoGraph,
+                                    containerColor = Color.Transparent,
+                                    contentColor = Color.White,
+                                    isGradient = true,
+                                    onClick = { onPredictFood?.invoke() }
+                                )
                             }
                         }
+                        
+                        // Main Action
+                        ActionButton(
+                            text = "Update Preparation",
+                            icon = Icons.Default.OutdoorGrill,
+                            containerColor = purpleAccent,
+                            onClick = { onTrackPreparation?.invoke() }
+                        )
                     }
+                } else {
+                    // Organizer Specific Layout
+                    if (status == "accepted") {
+                        ActionButton(text = "Pay Now", containerColor = greenStatus, onClick = { onPay?.invoke() })
+                    }
+                    
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Box(Modifier.weight(1f)) {
+                            ActionButton(
+                                text = "Chat",
+                                icon = Icons.AutoMirrored.Filled.Chat,
+                                containerColor = Color.White,
+                                contentColor = purpleAccent,
+                                borderColor = purpleAccent.copy(alpha = 0.2f),
+                                onClick = { onChat?.invoke() }
+                            )
+                        }
+                        Box(Modifier.weight(1f)) {
+                            ActionButton(
+                                text = "Track",
+                                icon = Icons.Default.MyLocation,
+                                containerColor = purpleAccent,
+                                onClick = { onTrackPreparation?.invoke() }
+                            )
+                        }
+                    }
+                    
+                    ActionButton(
+                        text = "Ask AI Assistant",
+                        icon = Icons.Default.AutoAwesome,
+                        containerColor = Color.Transparent,
+                        isGradient = true,
+                        onClick = { onAskAi?.invoke() }
+                    )
                 }
             }
         }
@@ -260,52 +259,60 @@ fun ExpandableBookingCard(
 }
 
 @Composable
-fun BookingInfoBox(label: String, value: String) {
-
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
-        Text(label, fontSize = 12.sp, color = Color.Gray)
-
-        Text(
-            value,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold
-        )
+fun BookingInfoItem(label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier = Modifier) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(Color(0xFFF3F4F6), RoundedCornerShape(10.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = Color(0xFF6B7280), modifier = Modifier.size(18.dp))
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Text(text = label, fontSize = 11.sp, color = Color(0xFF6B7280), fontWeight = FontWeight.Medium)
+            Text(text = value, fontSize = 15.sp, color = Color(0xFF1A1C1E), fontWeight = FontWeight.Bold)
+        }
     }
 }
 
 @Composable
-fun BookingActionButton(
+fun ActionButton(
     text: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
     containerColor: Color = Color.Transparent,
-    contentColor: Color = Color.Black,
-    isOutlined: Boolean = false,
+    contentColor: Color = Color.White,
+    borderColor: Color? = null,
+    isGradient: Boolean = false,
     onClick: () -> Unit
-) {
-
-    if (isOutlined) {
-
-        OutlinedButton(
-            onClick = onClick,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
-            border = BorderStroke(1.dp, Color.LightGray)
+)  {
+    val gradient = Brush.horizontalGradient(listOf(Color(0xFF6C3EF4), Color(0xFF9F5FFF)))
+    
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(50.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .then(
+                if (borderColor != null) Modifier.border(1.dp, borderColor, RoundedCornerShape(16.dp)) else Modifier
+            ),
+        color = if (isGradient) Color.Transparent else containerColor,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .then(if (isGradient) Modifier.background(gradient) else Modifier),
+            contentAlignment = Alignment.Center
         ) {
-            Text(text)
-        }
-
-    } else {
-
-        Button(
-            onClick = onClick,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = containerColor,
-                contentColor = contentColor
-            )
-        ) {
-            Text(text)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (icon != null) {
+                    Icon(icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                }
+                Text(text = text, color = contentColor, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            }
         }
     }
 }

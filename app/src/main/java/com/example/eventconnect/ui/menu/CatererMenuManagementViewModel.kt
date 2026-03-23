@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.eventconnect.data.network.*
+import com.example.eventconnect.utils.getAuthHeader
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,11 +29,11 @@ class CatererMenuManagementViewModel(
         viewModelScope.launch {
             _loading.value = true
             try {
-                val user = FirebaseAuth.getInstance().currentUser ?: return@launch
-                val token = user.getIdToken(false).await().token ?: return@launch
+                if (FirebaseAuth.getInstance().currentUser == null) return@launch
+                val authHeader = getAuthHeader() ?: return@launch
 
                 val response =
-                    RetrofitClient.apiService.getMyMenu("Bearer $token")
+                    RetrofitClient.apiService.getMyMenu(authHeader)
 
                 if (response.isSuccessful) {
                     _menu.value = response.body() ?: emptyList()
@@ -46,8 +47,8 @@ class CatererMenuManagementViewModel(
     fun addMenu(request: MenuCreateRequest, imageUri: Uri?) {
         viewModelScope.launch {
             try {
-                val user = FirebaseAuth.getInstance().currentUser ?: return@launch
-                val token = user.getIdToken(false).await().token ?: return@launch
+                if (FirebaseAuth.getInstance().currentUser == null) return@launch
+                val authHeader = getAuthHeader() ?: return@launch
 
                 var imageUrl: String? = null
 
@@ -68,7 +69,7 @@ class CatererMenuManagementViewModel(
 
                     val uploadResponse =
                         RetrofitClient.apiService.uploadMenuImage(
-                            "Bearer $token",
+                            authHeader,
                             body
                         )
 
@@ -78,7 +79,7 @@ class CatererMenuManagementViewModel(
                 }
 
                 RetrofitClient.apiService.createMenu(
-                    "Bearer $token",
+                    authHeader,
                     request.copy(image_url = imageUrl)
                 )
 
@@ -92,11 +93,11 @@ class CatererMenuManagementViewModel(
 
     fun deleteMenu(menuId: Int) {
         viewModelScope.launch {
-            val user = FirebaseAuth.getInstance().currentUser ?: return@launch
-            val token = user.getIdToken(false).await().token ?: return@launch
+            if (FirebaseAuth.getInstance().currentUser == null) return@launch
+            val authHeader = getAuthHeader() ?: return@launch
 
             RetrofitClient.apiService.deleteMenu(
-                "Bearer $token",
+                authHeader,
                 menuId
             )
 

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.eventconnect.data.network.RevenueResponse
 import com.example.eventconnect.data.network.RetrofitClient
+import com.example.eventconnect.utils.getAuthHeader
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,11 +28,11 @@ class RevenueViewModel : ViewModel() {
                 _loading.value = true
                 _error.value = null
 
-                val user = FirebaseAuth.getInstance().currentUser!!
-                val token = user.getIdToken(false).await().token!!
+                if (FirebaseAuth.getInstance().currentUser == null) return@launch
+                val authHeader = getAuthHeader() ?: return@launch
 
                 val response = RetrofitClient.apiService
-                    .getCatererRevenue("Bearer $token")
+                    .getCatererRevenue(authHeader)
 
                 if (response.isSuccessful) {
                     _revenue.value = response.body()

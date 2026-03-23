@@ -1,5 +1,7 @@
 package com.example.eventconnect.data.network
 
+import com.example.eventconnect.data.network.AiChatRequest
+import com.example.eventconnect.data.network.AiChatResponse
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -287,6 +289,12 @@ interface ApiService {
         @Path("bookingId") bookingId: Int
     ): Response<CheckoutResponse>
 
+    @POST("api/payments/success/{bookingId}")
+    suspend fun paymentSuccess(
+        @Header("Authorization") token: String,
+        @Path("bookingId") bookingId: Int
+    ): Response<Map<String, String>>
+
     @GET("api/payments/{bookingId}")
     suspend fun getPaymentDetails(
         @Header("Authorization") token: String,
@@ -318,7 +326,8 @@ interface ApiService {
     @GET("api/chat/{requestId}")
     suspend fun getChatHistory(
         @Header("Authorization") token: String,
-        @Path("requestId") requestId: Int
+        @Path("requestId") requestId: Int,
+        @Query("chat_type") chatType: String
     ): Response<List<ChatMessageResponse>>
 
     @PUT("api/bookings/{bookingId}/preparation-status")
@@ -376,5 +385,22 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Response<List<AcceptedRequestResponse>>
 
+    @GET("api/surplus/{requestId}")
+    suspend fun getSurplusLocation(
+        @Header("Authorization") token: String,
+        @Path("requestId") requestId: Int
+    ): Response<Map<String, Double>>
+
+    @POST("api/users/save-fcm-token")
+    suspend fun saveFcmToken(
+        @Header("Authorization") token: String,
+        @Body request: FcmTokenRequest
+    ): Response<Map<String, String>>
+
+    @POST("api/chat/ai-assistant")
+    suspend fun sendAiMessage(
+        @Header("Authorization") token: String,
+        @Body request: AiChatRequest
+    ): Response<AiChatResponse>
 
 }

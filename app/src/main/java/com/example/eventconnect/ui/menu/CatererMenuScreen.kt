@@ -73,10 +73,15 @@ fun CatererMenuScreen(
                                 && !bookingLoading,
                         onClick = {
 
+                            if (selectedItems.isEmpty()) return@TextButton
+
+                            // Distribute attendees across selected menu items (at least 1 each)
+                            val perItemQty = maxOf(1, attendees / selectedItems.size)
+
                             val bookingItems = selectedItems.map {
                                 BookingItemRequest(
                                     menu_id = it.id,
-                                    quantity = attendees
+                                    quantity = perItemQty
                                 )
                             }
 

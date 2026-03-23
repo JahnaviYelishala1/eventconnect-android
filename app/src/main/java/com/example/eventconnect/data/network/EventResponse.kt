@@ -11,10 +11,10 @@ data class EventResponse(
     val season: String,
     val estimated_food_quantity: Double,
     val unit: String,
-
     // ✅ NEW FIELDS (FROM BACKEND)
     val food_prepared: Double?,
     val food_consumed: Double?,
     val food_surplus: Double?,
-    val status: String
+    val status: String,
+    val surplus_request_id: Int?
 )

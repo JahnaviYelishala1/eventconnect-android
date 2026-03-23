@@ -3,6 +3,7 @@ package com.example.eventconnect.ui.menu
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.eventconnect.data.network.*
+import com.example.eventconnect.utils.getAuthHeader
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,14 +42,15 @@ class MenuViewModel : ViewModel() {
                 _loading.value = true
                 _error.value = null
 
-                val user = FirebaseAuth.getInstance().currentUser
-                    ?: throw Exception("User not logged in")
+                if (FirebaseAuth.getInstance().currentUser == null) {
+                    throw Exception("User not logged in")
+                }
 
-                val token = user.getIdToken(false).await().token
+                val authHeader = getAuthHeader()
                     ?: throw Exception("Failed to get token")
 
                 val response = RetrofitClient.apiService
-                    .getCatererMenu("Bearer $token", catererId)
+                    .getCatererMenu(authHeader, catererId)
 
                 if (response.isSuccessful) {
                     _menu.value = response.body() ?: emptyList()
@@ -73,14 +75,15 @@ class MenuViewModel : ViewModel() {
                 _bookingError.value = null
                 _bookingSuccess.value = false
 
-                val user = FirebaseAuth.getInstance().currentUser
-                    ?: throw Exception("User not logged in")
+                if (FirebaseAuth.getInstance().currentUser == null) {
+                    throw Exception("User not logged in")
+                }
 
-                val token = user.getIdToken(false).await().token
+                val authHeader = getAuthHeader()
                     ?: throw Exception("Failed to get token")
 
                 val response = RetrofitClient.apiService.createBooking(
-                    token = "Bearer $token",
+                    token = authHeader,
                     request = request
                 )
 

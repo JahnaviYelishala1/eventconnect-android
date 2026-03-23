@@ -51,10 +51,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.ui)
     implementation(libs.androidx.compose.foundation)
-    implementation(libs.androidx.material3)
-    implementation(libs.ui)
+    implementation(libs.androidx.compose.animation)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
@@ -68,8 +66,10 @@ dependencies {
     // 🔥 Firebase Authentication
     implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-messaging:23.4.1")
 
-    // 🔥 ViewModel for Compose
+    // 🔥 Notifications
+    implementation("androidx.core:core:1.12.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
 
     // 🔥 Navigation for Compose
@@ -86,14 +86,10 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("org.osmdroid:osmdroid-android:6.1.18")
 
-    implementation("androidx.activity:activity-compose:1.8.2")
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation ("com.google.accompanist:accompanist-permissions:0.28.0")
-    implementation("androidx.compose.foundation:foundation-layout:1.5.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
-    implementation("androidx.compose.animation:animation:<latest_version>")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
-
 
 }

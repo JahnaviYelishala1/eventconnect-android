@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import com.example.eventconnect.utils.getAuthHeader
 
 class FindCatererViewModel : ViewModel() {
 
@@ -45,17 +46,15 @@ class FindCatererViewModel : ViewModel() {
                     return@launch
                 }
 
-                val tokenResult = user.getIdToken(false).await()
-                val token = tokenResult.token
-
-                if (token.isNullOrEmpty()) {
+                val authHeader = getAuthHeader()
+                if (authHeader == null) {
                     _error.value = "Authentication failed"
                     return@launch
                 }
 
                 val response =
                     RetrofitClient.apiService.matchCaterers(
-                        token = "Bearer $token",
+                        token = authHeader,
                         eventId = eventId,
                         vegOnly = vegOnly,
                         nonVegOnly = nonVegOnly,

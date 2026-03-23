@@ -3,6 +3,7 @@ package com.example.eventconnect.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.eventconnect.data.network.*
+import com.example.eventconnect.utils.getAuthHeader
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,8 +38,8 @@ class MyEventsViewModel : ViewModel() {
                             return@launch
                         }
 
-                val token =
-                    currentUser.getIdToken(false).await().token
+                val authHeader =
+                    getAuthHeader()
                         ?: run {
                             _error.value = "Token error"
                             return@launch
@@ -46,7 +47,7 @@ class MyEventsViewModel : ViewModel() {
 
                 val response =
                     RetrofitClient.apiService
-                        .getMyEvents("Bearer $token")
+                        .getMyEvents(authHeader)
 
                 if (response.isSuccessful) {
                     _events.value = response.body() ?: emptyList()
@@ -82,8 +83,8 @@ class MyEventsViewModel : ViewModel() {
                             return@launch
                         }
 
-                val token =
-                    currentUser.getIdToken(false).await().token
+                val authHeader =
+                    getAuthHeader()
                         ?: run {
                             _error.value = "Token error"
                             return@launch
@@ -91,7 +92,7 @@ class MyEventsViewModel : ViewModel() {
 
                 val response =
                     RetrofitClient.apiService.completeEvent(
-                        "Bearer $token",
+                        authHeader,
                         eventId,
                         CompleteEventRequest(
                             food_prepared = foodPrepared,

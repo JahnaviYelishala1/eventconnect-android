@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import com.example.eventconnect.utils.getAuthHeader
 
 class SurplusViewModel : ViewModel() {
 
@@ -32,8 +33,8 @@ class SurplusViewModel : ViewModel() {
     ) {
         viewModelScope.launch {
             try {
-                val user = FirebaseAuth.getInstance().currentUser!!
-                val token = user.getIdToken(false).await().token!!
+                if (FirebaseAuth.getInstance().currentUser == null) return@launch
+                val authHeader = getAuthHeader() ?: return@launch
                 val request = SurplusAlertRequest(
                     event_id = eventId,
                     description = description,
@@ -42,7 +43,7 @@ class SurplusViewModel : ViewModel() {
                     longitude = longitude
                 )
                 val response = RetrofitClient.apiService.sendSurplusAlert(
-                    "Bearer $token",
+                    authHeader,
                     request
                 )
                 if (response.isSuccessful) {
@@ -58,11 +59,17 @@ class SurplusViewModel : ViewModel() {
         }
     }
 
+    fun fetchAcceptedNgoOnce(requestId: Int) {
+        viewModelScope.launch {
+            checkAcceptedNgo(requestId)
+        }
+    }
+
     private fun startPolling() {
 
         viewModelScope.launch {
 
-            while (true) {
+            while (_acceptedNgo.value == null) {
 
                 delay(5000)
 
@@ -75,12 +82,12 @@ class SurplusViewModel : ViewModel() {
 
         try {
 
-            val user = FirebaseAuth.getInstance().currentUser!!
-            val token = user.getIdToken(false).await().token!!
+            if (FirebaseAuth.getInstance().currentUser == null) return
+            val authHeader = getAuthHeader() ?: return
 
             val response =
                 RetrofitClient.apiService.getAcceptedNgo(
-                    "Bearer $token",
+                    authHeader,
                     requestId
                 )
             if (response.isSuccessful && response.body() != null) {
@@ -90,6 +97,30 @@ class SurplusViewModel : ViewModel() {
 
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    fun fetchLocation(requestId: Int, onResult: (Double, Double) -> Unit) {
+        viewModelScope.launch {
+            try {
+                if (FirebaseAuth.getInstance().currentUser == null) return@launch
+                val authHeader = getAuthHeader() ?: return@launch
+
+                val response = RetrofitClient.apiService.getSurplusLocation(
+                    authHeader,
+                    requestId
+                )
+
+                if (response.isSuccessful) {
+                    val body: Map<String, Double> = response.body() ?: return@launch
+                    val lat = body["latitude"] ?: return@launch
+                    val lng = body["longitude"] ?: return@launch
+
+                    onResult(lat, lng)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }

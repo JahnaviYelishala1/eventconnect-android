@@ -21,7 +21,7 @@ class BookingViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val user = FirebaseAuth.getInstance().currentUser ?: return@launch
-                val token = user.getIdToken(false).await().token ?: return@launch
+                val token = user.getIdToken(true).await().token ?: return@launch
 
                 val request = BookingCreateRequest(
                     event_id = eventId,

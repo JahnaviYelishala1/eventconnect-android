@@ -1,5 +1,6 @@
 package com.example.eventconnect.ui.booking
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.eventconnect.data.network.FoodPredictionRequest
@@ -44,7 +45,6 @@ class FoodPredictionViewModel : ViewModel() {
                 val token = user.getIdToken(false).await().token!!
                 val authHeader = "Bearer $token"
 
-                // 1️⃣ Get Booking Details
                 val bookingResponse =
                     RetrofitClient.apiService.getBookingDetails(
                         authHeader,
@@ -57,20 +57,22 @@ class FoodPredictionViewModel : ViewModel() {
                 }
 
                 val booking = bookingResponse.body()!!
+                Log.d("PREDICT", "Booking fetched")
 
-                // 2️⃣ Get Event Details
+                // 2️⃣ Get Event Details (with fallback)
                 val eventResponse =
                     RetrofitClient.apiService.getEventDetails(
                         authHeader,
                         booking.event_id
                     )
 
-                if (!eventResponse.isSuccessful) {
-                    _error.value = "Failed to fetch event details"
-                    return@launch
+                val mealType = if (eventResponse.isSuccessful) {
+                    Log.d("PREDICT", "Event fetched")
+                    eventResponse.body()?.meal_style ?: "Buffet"
+                } else {
+                    Log.e("PREDICT", "Event fetch failed, using fallback")
+                    "Buffet"
                 }
-
-                val event = eventResponse.body()!!
 
                 // 3️⃣ Get Caterer Menu (to fetch category + food_type)
                 val menuResponse =
@@ -83,6 +85,8 @@ class FoodPredictionViewModel : ViewModel() {
                     if (menuResponse.isSuccessful)
                         menuResponse.body() ?: emptyList()
                     else emptyList()
+
+                Log.d("PREDICT", "Menu size = ${menuItems.size}")
 
                 // Map menu items by id for robust lookup
                 val menuMap = menuItems.associateBy { it.id }
@@ -121,11 +125,12 @@ class FoodPredictionViewModel : ViewModel() {
                 // 5️⃣ Build request
                 val request = FoodPredictionRequest(
                     attendees = booking.attendees ?: 0,
-                    meal_type = event.meal_style,
+                    meal_type = mealType,
                     items = predictionItems
                 )
 
                 // 6️⃣ Call prediction API
+                Log.d("PREDICT", "Calling prediction API")
                 val response =
                     RetrofitClient.apiService.predictFood(
                         authHeader,
