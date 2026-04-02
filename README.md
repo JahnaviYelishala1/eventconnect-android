@@ -2,6 +2,50 @@
 
 EventConnect is a platform for event hosts to find caterers, NGOs, and manage event logistics, food prediction, and bookings. The app connects organizers, caterers, and NGOs for seamless event management.
 
+## Visual Showcase
+
+### Organizer Experience
+| Profile Management | Create Event | My Events |
+| :---: | :---: | :---: |
+| <img src="eventconnect-ui-ss/Organizer_profile_screen.jpeg" width="250"> | <img src="eventconnect-ui-ss/Create_event_ss.jpeg" width="250"> | <img src="eventconnect-ui-ss/Organizer_events_screen.jpeg" width="250"> |
+
+| Sending Requests | Booking Status |
+| :---: | :---: |
+| <img src="eventconnect-ui-ss/Sending_menu_requests_ss.jpeg" width="250"> | <img src="eventconnect-ui-ss/Organizer_booking_requests.jpeg" width="250"> |
+
+### Caterer Experience
+| Dashboard | Menu Management | Booking Requests |
+| :---: | :---: | :---: |
+| <img src="eventconnect-ui-ss/Caterer_dashboard.jpeg" width="250"> | <img src="eventconnect-ui-ss/Menu_screen.jpeg" width="250"> | <img src="eventconnect-ui-ss/Booking_requests_screen.jpeg" width="250"> |
+
+| Revenue Insights | Payment History |
+| :---: | :---: |
+| <img src="eventconnect-ui-ss/Revenue_dashboard_screen.jpeg" width="250"> | <img src="eventconnect-ui-ss/Payment_history_screen.jpeg" width="250"> |
+
+### Preparation & Communication
+| Update Status | Track Preparation | Real-time Chat |
+| :---: | :---: | :---: |
+| <img src="eventconnect-ui-ss/Updating_preparation_status.jpeg" width="250"> | <img src="eventconnect-ui-ss/Getting_preparation_status.jpeg" width="250"> | <img src="eventconnect-ui-ss/Chat_interface_screenshot.jpeg" width="250"> |
+
+### NGO & Surplus Food System
+| Sending Alerts | NGO Matching |
+| :---: | :---: |
+| <img src="eventconnect-ui-ss/Sending_alert_to_NGO.jpeg" width="250"> | <img src="eventconnect-ui-ss/NGOMatched_screenshot.jpeg" width="250"> |
+
+| Accepted Requests | Navigation Route |
+| :---: | :---: |
+| <img src="eventconnect-ui-ss/Accepted_requests_by_NGO.jpeg" width="250"> | <img src="eventconnect-ui-ss/NavigationRoute_screenshot.jpeg" width="250"> |
+
+### AI Features
+| AI Assistant | Food Quantity Prediction |
+| :---: | :---: |
+| <img src="eventconnect-ui-ss/AI_assistent_help_SS.jpeg" width="250"> | <img src="eventconnect-ui-ss/AI_Predicting_the_quantity_of_food.jpeg" width="250"> |
+
+### Authentication
+| Forgot Password | Email Confirmation |
+| :---: | :---: |
+| <img src="eventconnect-ui-ss/forgot_password_ss.jpeg" width="250"> | <img src="eventconnect-ui-ss/Password_reser_email_confirmation_ss.jpeg" width="250"> |
+
 ## Features
 
 - User authentication (Signup/Login)
@@ -73,9 +117,9 @@ EventConnect is a platform for event hosts to find caterers, NGOs, and manage ev
 - `GET /api/ngos/documents` — Get NGO uploaded documents
 - `GET /api/ngos/documents/status` — Get NGO document verification status
 - `POST /api/ngos/upload-image` — Upload NGO profile image
-- `POST /api/ngo/profile` — Save NGO profile details
-- `GET /api/ngo/profile` — Get NGO profile details
-- `PUT /api/ngo/profile` — Update NGO profile details
+- `POST /api/ngos/profile` — Save NGO profile details
+- `GET /api/ngos/profile` — Get NGO profile details
+- `PUT /api/ngos/profile` — Update NGO profile details
 
 ### Surplus Food APIs
 - `POST /api/surplus/send-alert` — Send surplus food alert to nearby NGOs
