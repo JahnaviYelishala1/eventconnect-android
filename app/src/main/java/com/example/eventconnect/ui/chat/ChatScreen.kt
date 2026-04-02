@@ -35,7 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun ChatScreen(
     requestId: Int,
     currentUserId: Int? = null,
-    onBack: (() -> Unit)? = null
+    onBack: () -> Unit
 ) {
     val viewModel: ChatViewModel = viewModel(
         factory = ChatViewModelFactory(requestId)
@@ -83,7 +83,7 @@ fun ChatScreen(
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = { onBack?.invoke() }) {
+                        IconButton(onClick = onBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color(0xFF1A1C1E))
                         }
                     },

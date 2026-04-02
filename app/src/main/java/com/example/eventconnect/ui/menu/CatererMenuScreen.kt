@@ -1,17 +1,29 @@
 package com.example.eventconnect.ui.menu
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
@@ -31,7 +43,6 @@ fun CatererMenuScreen(
     navController: NavController,
     viewModel: MenuViewModel = viewModel()
 ) {
-
     val menu by viewModel.menu.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -61,30 +72,39 @@ fun CatererMenuScreen(
     val totalPerPlate = selectedItems.sumOf { it.price }
     val isWithinBudget = totalPerPlate in minPrice.toDouble()..maxPrice.toDouble()
 
+    val backgroundColor = Color(0xFFF8FAFC)
+    val primaryPurple = Color(0xFF6C3EF4)
+    val secondaryPurple = Color(0xFF7C3AED)
+    val purpleGradient = Brush.horizontalGradient(listOf(secondaryPurple, primaryPurple))
+
     Scaffold(
+        containerColor = backgroundColor,
         topBar = {
             TopAppBar(
-                title = { Text("Select Menu Items") },
+                title = {
+                    Text(
+                        "Select Menu Items",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF111827)
+                        )
+                    )
+                },
                 actions = {
-                    TextButton(
+                    Button(
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .height(40.dp),
                         enabled = selectedItems.isNotEmpty()
                                 && isWithinBudget
                                 && selectedDate != null
                                 && !bookingLoading,
                         onClick = {
-
-                            if (selectedItems.isEmpty()) return@TextButton
-
-                            // Distribute attendees across selected menu items (at least 1 each)
+                            if (selectedItems.isEmpty()) return@Button
                             val perItemQty = maxOf(1, attendees / selectedItems.size)
-
                             val bookingItems = selectedItems.map {
-                                BookingItemRequest(
-                                    menu_id = it.id,
-                                    quantity = perItemQty
-                                )
+                                BookingItemRequest(menu_id = it.id, quantity = perItemQty)
                             }
-
                             val request = BookingCreateRequest(
                                 event_id = eventId,
                                 caterer_id = catererId,
@@ -92,76 +112,88 @@ fun CatererMenuScreen(
                                 booking_date = selectedDate!!,
                                 items = bookingItems
                             )
-
                             viewModel.sendBookingRequest(request)
-                        }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                        contentPadding = PaddingValues(),
+                        shape = RoundedCornerShape(20.dp)
                     ) {
-                        if (bookingLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text("Send Request")
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .background(
+                                    if (selectedItems.isNotEmpty() && isWithinBudget && selectedDate != null)
+                                        purpleGradient else Brush.linearGradient(listOf(Color.LightGray, Color.Gray))
+                                )
+                                .padding(horizontal = 16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (bookingLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Color.White
+                                )
+                            } else {
+                                Text("Send Request", color = Color.White, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         }
     ) { padding ->
-
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
+                .padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
-            /* -------- DATE SELECTION -------- */
-
-            OutlinedButton(
-                onClick = { showDatePicker = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    selectedDate ?: "Select Event Date"
+            item {
+                ModernDateCard(
+                    selectedDate = selectedDate,
+                    onClick = { showDatePicker = true }
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
-
             when {
-                loading -> CircularProgressIndicator()
-
-                error != null ->
-                    Text(error ?: "", color = MaterialTheme.colorScheme.error)
-
-                filteredMenu.isEmpty() ->
-                    Text("No $selectedFoodType items available.")
-
+                loading -> item {
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = primaryPurple)
+                    }
+                }
+                error != null -> item {
+                    Text(error ?: "Error", color = MaterialTheme.colorScheme.error)
+                }
+                filteredMenu.isEmpty() -> item {
+                    Text("No $selectedFoodType items available.", color = Color(0xFF6B7280))
+                }
                 else -> {
-
                     val groupedMenu = filteredMenu.groupBy { it.category }
-
                     groupedMenu.forEach { (category, items) ->
+                        item {
+                            Column {
+                                Text(
+                                    text = category,
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 18.sp,
+                                        color = Color(0xFF111827)
+                                    )
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Divider(color = Color(0xFFE2E8F0), thickness = 1.dp)
+                            }
+                        }
 
-                        Text(
-                            category,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-
-                        Spacer(Modifier.height(8.dp))
-
-                        items.forEach { item ->
-
+                        items(items) { item ->
                             val isSelected = selectedItems.contains(item)
-
-                            MenuItemCard(
+                            MenuItemHorizontalCard(
                                 item = item,
                                 isSelected = isSelected,
                                 onToggle = {
-
                                     if (isSelected) {
                                         selectedItems.remove(item)
                                     } else {
@@ -175,24 +207,18 @@ fun CatererMenuScreen(
                                 }
                             )
                         }
-
-                        Spacer(Modifier.height(16.dp))
                     }
                 }
             }
         }
     }
 
-    /* -------- DATE PICKER -------- */
-
     if (showDatePicker) {
-
         val datePickerState = rememberDatePickerState()
-
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
-                Button(onClick = {
+                TextButton(onClick = {
                     val millis = datePickerState.selectedDateMillis
                     if (millis != null) {
                         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -200,15 +226,21 @@ fun CatererMenuScreen(
                     }
                     showDatePicker = false
                 }) {
-                    Text("OK")
+                    Text("OK", color = primaryPurple, fontWeight = FontWeight.Bold)
                 }
-            }
+            },
+            colors = DatePickerDefaults.colors(containerColor = Color.White)
         ) {
-            DatePicker(state = datePickerState)
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    todayContentColor = primaryPurple,
+                    selectedDayContainerColor = primaryPurple,
+                    selectedDayContentColor = Color.White
+                )
+            )
         }
     }
-
-    /* -------- SUCCESS DIALOG -------- */
 
     if (bookingSuccess) {
         AlertDialog(
@@ -217,29 +249,29 @@ fun CatererMenuScreen(
                 Button(onClick = {
                     viewModel.resetBookingState()
                     navController.popBackStack()
-                }) {
+                }, colors = ButtonDefaults.buttonColors(containerColor = primaryPurple)) {
                     Text("OK")
                 }
             },
-            title = { Text("Booking Sent") },
-            text = {
-                Text("Your booking request has been sent successfully.")
-            }
+            title = { Text("Booking Sent", fontWeight = FontWeight.Bold) },
+            text = { Text("Your booking request has been sent successfully.") },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(20.dp)
         )
     }
 
     if (bookingError != null) {
         AlertDialog(
-            onDismissRequest = {},
+            onDismissRequest = { viewModel.resetBookingState() },
             confirmButton = {
-                Button(onClick = {
-                    viewModel.resetBookingState()
-                }) {
+                Button(onClick = { viewModel.resetBookingState() }, colors = ButtonDefaults.buttonColors(containerColor = primaryPurple)) {
                     Text("OK")
                 }
             },
-            title = { Text("Error") },
-            text = { Text(bookingError ?: "") }
+            title = { Text("Error", fontWeight = FontWeight.Bold) },
+            text = { Text(bookingError ?: "") },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(20.dp)
         )
     }
 
@@ -247,59 +279,154 @@ fun CatererMenuScreen(
         AlertDialog(
             onDismissRequest = { showBudgetDialog = false },
             confirmButton = {
-                Button(onClick = { showBudgetDialog = false }) {
+                Button(onClick = { showBudgetDialog = false }, colors = ButtonDefaults.buttonColors(containerColor = primaryPurple)) {
                     Text("OK")
                 }
             },
-            title = { Text("Budget Exceeded") },
-            text = {
-                Text("Adding \"$exceededItemName\" exceeds your price range.")
-            }
+            title = { Text("Budget Exceeded", fontWeight = FontWeight.Bold) },
+            text = { Text("Adding \"$exceededItemName\" exceeds your price range.") },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(20.dp)
         )
     }
 }
 
 @Composable
-private fun MenuItemCard(
+fun ModernDateCard(selectedDate: String?, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .shadow(4.dp, RoundedCornerShape(16.dp)),
+        color = Color.White,
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(Color(0xFFF5F3FF), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color(0xFF6C3EF4), modifier = Modifier.size(20.dp))
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f)) {
+                Text("Event Date", color = Color(0xFF6B7280), style = MaterialTheme.typography.labelMedium)
+                Text(
+                    selectedDate ?: "Select Date",
+                    color = Color(0xFF111827),
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                )
+            }
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color(0xFF94A3B8))
+        }
+    }
+}
+
+@Composable
+fun MenuItemHorizontalCard(
     item: MenuResponse,
     isSelected: Boolean,
     onToggle: () -> Unit
 ) {
-    Card(
+    val elevation by animateDpAsState(if (isSelected) 8.dp else 4.dp, label = "elevation")
+    val buttonColor by animateColorAsState(if (isSelected) Color(0xFF22C55E) else Color(0xFF6C3EF4), label = "buttonColor")
+
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp)
+            .shadow(elevation, RoundedCornerShape(20.dp)),
+        color = Color.White,
+        shape = RoundedCornerShape(20.dp)
     ) {
-        Column(Modifier.padding(16.dp)) {
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(item.item_name, style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.width(8.dp))
-                Text(if (item.food_type == "Veg") "🟢" else "🔴")
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Food Image
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0xFFF1F5F9))
+            ) {
+                if (item.image_url != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(item.image_url),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Icon(
+                        Icons.Default.Restaurant,
+                        contentDescription = null,
+                        modifier = Modifier.align(Alignment.Center),
+                        tint = Color(0xFFCBD5E1)
+                    )
+                }
             }
 
-            Spacer(Modifier.height(4.dp))
-            Text("₹${item.price}")
+            Spacer(Modifier.width(16.dp))
 
-            Spacer(Modifier.height(6.dp))
-
-            item.image_url?.let {
-                Image(
-                    painter = rememberAsyncImagePainter(it),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(140.dp)
+            // Text Info
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        item.item_name,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF111827)
+                        )
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(if (item.food_type == "Veg") "🟢" else "🔴", fontSize = 12.sp)
+                }
+                
+                Text(
+                    "₹${item.price}",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF4B5563)
+                    )
                 )
+
+                Spacer(Modifier.height(4.dp))
+                
+                Surface(
+                    color = (if (item.food_type == "Veg") Color(0xFFDCFCE7) else Color(0xFFFEE2E2)),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        text = item.food_type,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = (if (item.food_type == "Veg") Color(0xFF166534) else Color(0xFF991B1B)),
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
             }
 
-            Spacer(Modifier.height(8.dp))
-
+            // Add Button
             Button(
                 onClick = onToggle,
-                modifier = Modifier.fillMaxWidth()
+                colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                modifier = Modifier.height(36.dp),
+                shape = RoundedCornerShape(18.dp)
             ) {
-                Text(if (isSelected) "Remove" else "Add")
+                if (isSelected) {
+                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Added", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold))
+                } else {
+                    Text("Add", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold))
+                }
             }
         }
     }

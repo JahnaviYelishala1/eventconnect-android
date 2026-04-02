@@ -44,7 +44,7 @@ sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: 
 
     object NgoAccepted : BottomNavItem(
         "ngo-accepted-requests",
-        Icons.Default.List,
+        Icons.AutoMirrored.Filled.List,
         "Requests"
     )
 }
@@ -93,11 +93,11 @@ fun NavGraph() {
                 }
             }
 
-            when {
+            when (currentRoute) {
 
                 /* -------- ORGANIZER -------- */
 
-                currentRoute in organizerRoutes -> {
+                in organizerRoutes -> {
 
                     NavigationBar(
                         containerColor = Color(0xFF9F5FFF)
@@ -122,7 +122,7 @@ fun NavGraph() {
 
                 /* -------- CATERER -------- */
 
-                currentRoute in catererRoutes -> {
+                in catererRoutes -> {
 
                     NavigationBar {
 
@@ -163,7 +163,7 @@ fun NavGraph() {
 
                 /* -------- NGO -------- */
 
-                currentRoute in ngoRoutes -> {
+                in ngoRoutes -> {
 
                     NavigationBar {
 
@@ -199,6 +199,7 @@ fun NavGraph() {
 
                 LoginScreen(
                     onNavigateToSignup = { navController.navigate("signup") },
+                    onNavigateToForgotPassword = { navController.navigate("forgot-password") },
                     onLoginSuccess = {
                         navController.navigate("home-gate") {
                             popUpTo("login") { inclusive = true }
@@ -216,6 +217,12 @@ fun NavGraph() {
                             popUpTo("signup") { inclusive = true }
                         }
                     }
+                )
+            }
+
+            composable("forgot-password") {
+                ForgotPasswordScreen(
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 
@@ -258,7 +265,10 @@ fun NavGraph() {
                 )
             ) {
                 val requestId = it.arguments?.getInt("requestId")!!
-                com.example.eventconnect.ui.chat.ChatScreen(requestId = requestId)
+                ChatScreen(
+                    requestId = requestId,
+                    onBack = { navController.popBackStack() }
+                )
             }
 
             /* -------- FOOD PREDICTION -------- */
@@ -272,7 +282,10 @@ fun NavGraph() {
 
                 val bookingId = it.arguments?.getInt("bookingId")!!
 
-                FoodPredictionScreen(bookingId)
+                FoodPredictionScreen(
+                    bookingId = bookingId,
+                    onBack = { navController.popBackStack() }
+                )
             }
 
             /* -------- PREPARATION TRACKING -------- */
@@ -436,7 +449,10 @@ fun NavGraph() {
                 arguments = listOf(navArgument("bookingId") { type = NavType.IntType })
             ) {
                 val bookingId = it.arguments?.getInt("bookingId")!!
-                AiChatScreen(bookingId = bookingId)
+                AiChatScreen(
+                    bookingId = bookingId,
+                    onBack = { navController.popBackStack() }
+                )
             }
 
             composable(

@@ -8,7 +8,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -18,17 +17,15 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -42,6 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun LoginScreen(
     onNavigateToSignup: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit,
     onLoginSuccess: () -> Unit,
     authViewModel: AuthViewModel = viewModel()
 ) {
@@ -69,14 +67,14 @@ fun LoginScreen(
 
     val primaryPurple = Color(0xFF6C3EF4)
     val secondaryViolet = Color(0xFF9F5FFF)
-    val backgroundGradient = Brush.verticalGradient(
-        colors = listOf(Color(0xFFFDFBFF), Color(0xFFF3EFFF))
-    )
+    val backgroundGrey = Color(0xFFF8FAFC)
+    val secondaryText = Color(0xFF6B7280)
+    val inputText = Color(0xFF111827)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundGradient)
+            .background(backgroundGrey)
     ) {
         AnimatedVisibility(
             visible = visible,
@@ -92,37 +90,9 @@ fun LoginScreen(
                     .padding(horizontal = 28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(60.dp))
+                Spacer(modifier = Modifier.height(80.dp))
 
-                // App Logo Section
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(primaryPurple),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock, // Placeholder for logo
-                            contentDescription = "Logo",
-                            tint = Color.White,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "EventConnect",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = primaryPurple,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(48.dp))
-
-                // Welcome Text
+                // Welcome Section
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.Start
@@ -131,17 +101,17 @@ fun LoginScreen(
                         text = "Welcome Back",
                         fontSize = 32.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color(0xFF1A1C1E)
+                        color = inputText
                     )
                     Text(
-                        text = "Login to continue your journey",
+                        text = "Login to your account to continue",
                         fontSize = 16.sp,
-                        color = Color.Gray,
+                        color = secondaryText,
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(48.dp))
 
                 // Input Fields
                 PremiumTextField(
@@ -165,13 +135,13 @@ fun LoginScreen(
                     keyboardType = KeyboardType.Password
                 )
 
-                // Forgot Password
+                // Forgot Password (Right Aligned Clickable)
                 Text(
                     text = "Forgot Password?",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 12.dp)
-                        .clickable { /* Handle forgot password */ },
+                        .clickable { onNavigateToForgotPassword() },
                     textAlign = TextAlign.End,
                     color = primaryPurple,
                     fontWeight = FontWeight.SemiBold,
@@ -225,52 +195,6 @@ fun LoginScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // OR Divider
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    HorizontalDivider(
-                        modifier = Modifier.weight(1f),
-                        color = Color.LightGray.copy(alpha = 0.5f)
-                    )
-                    Text(
-                        " OR ",
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        color = Color.Gray,
-                        fontSize = 14.sp
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.weight(1f),
-                        color = Color.LightGray.copy(alpha = 0.5f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Google Sign In (Optional)
-                OutlinedButton(
-                    onClick = { /* Google Sign In */ },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    border = ButtonDefaults.outlinedButtonBorder.copy(
-                        brush = Brush.linearGradient(listOf(Color.LightGray, Color.LightGray))
-                    )
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Icon would go here
-                        Text(
-                            "Continue with Google",
-                            color = Color(0xFF1A1C1E),
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-
                 Spacer(modifier = Modifier.height(40.dp))
 
                 // Sign Up Footer
@@ -280,11 +204,11 @@ fun LoginScreen(
                 ) {
                     Text(
                         "Don't have an account? ",
-                        color = Color.Gray,
+                        color = secondaryText,
                         fontSize = 15.sp
                     )
                     Text(
-                        "Sign Up",
+                        "Signup",
                         color = primaryPurple,
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
@@ -323,18 +247,21 @@ fun PremiumTextField(
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val primaryPurple = Color(0xFF6C3EF4)
+    val fieldBackground = Color(0xFFF1F5F9)
+    val secondaryText = Color(0xFF6B7280)
+    val inputText = Color(0xFF111827)
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .shadow(
-                    elevation = if (isFocused) 8.dp else 2.dp,
-                    shape = RoundedCornerShape(20.dp),
-                    ambientColor = if (isFocused) primaryPurple else Color.Black
+                    elevation = if (isFocused) 8.dp else 0.dp,
+                    shape = RoundedCornerShape(14.dp),
+                    ambientColor = primaryPurple
                 ),
-            shape = RoundedCornerShape(20.dp),
-            color = Color.White
+            shape = RoundedCornerShape(14.dp),
+            color = fieldBackground
         ) {
             TextField(
                 value = value,
@@ -342,12 +269,12 @@ fun PremiumTextField(
                 modifier = Modifier
                     .fillMaxWidth()
                     .onFocusChanged { isFocused = it.isFocused },
-                placeholder = { Text(label, color = Color.Gray, fontSize = 16.sp) },
+                placeholder = { Text(label, color = secondaryText, fontSize = 16.sp) },
                 leadingIcon = {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        tint = if (isFocused) primaryPurple else Color.Gray,
+                        tint = if (isFocused) primaryPurple else secondaryText,
                         modifier = Modifier.size(22.dp)
                     )
                 },
@@ -357,7 +284,7 @@ fun PremiumTextField(
                             Icon(
                                 imageVector = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                                 contentDescription = null,
-                                tint = if (isFocused) primaryPurple else Color.Gray
+                                tint = if (isFocused) primaryPurple else secondaryText
                             )
                         }
                     }
@@ -368,15 +295,17 @@ fun PremiumTextField(
                     imeAction = ImeAction.Next
                 ),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    disabledContainerColor = Color.White,
+                    focusedContainerColor = fieldBackground,
+                    unfocusedContainerColor = fieldBackground,
+                    disabledContainerColor = fieldBackground,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
-                    cursorColor = primaryPurple
+                    cursorColor = primaryPurple,
+                    focusedTextColor = inputText,
+                    unfocusedTextColor = inputText
                 ),
                 singleLine = true,
-                shape = RoundedCornerShape(20.dp)
+                shape = RoundedCornerShape(14.dp)
             )
         }
     }

@@ -21,7 +21,11 @@ class AuthViewModel : ViewModel() {
     private val _authState = MutableStateFlow<String?>(null)
     val authState: StateFlow<String?> = _authState
 
+    private val _resetPasswordState = MutableStateFlow<String?>(null)
+    val resetPasswordState: StateFlow<String?> = _resetPasswordState
+
     fun login(email: String, password: String) {
+        _authState.value = null
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener {
                 _authState.value = "SUCCESS"
@@ -36,6 +40,7 @@ class AuthViewModel : ViewModel() {
     }
 
     fun signup(email: String, password: String) {
+        _authState.value = null
         auth.createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener {
                 _authState.value = "SUCCESS"
@@ -47,6 +52,21 @@ class AuthViewModel : ViewModel() {
             .addOnFailureListener { exception ->
                 _authState.value = exception.message
             }
+    }
+
+    fun resetPassword(email: String) {
+        _resetPasswordState.value = "LOADING"
+        auth.sendPasswordResetEmail(email)
+            .addOnSuccessListener {
+                _resetPasswordState.value = "SUCCESS"
+            }
+            .addOnFailureListener { exception ->
+                _resetPasswordState.value = exception.message
+            }
+    }
+
+    fun clearResetState() {
+        _resetPasswordState.value = null
     }
 
     // ✅ NEW: Save FCM token to backend after login/signup

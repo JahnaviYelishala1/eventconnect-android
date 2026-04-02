@@ -120,18 +120,18 @@ interface ApiService {
     ): Response<Map<String, String>>
 
 
-    @POST("api/ngo/profile")
+    @POST("api/ngos/profile")
     suspend fun saveNgoProfile(
         @Header("Authorization") token: String,
         @Body request: NgoProfileRequest
     ): Response<Map<String, String>>
 
-    @GET("api/ngo/profile")
+    @GET("api/ngos/profile")
     suspend fun getNgoProfile(
         @Header("Authorization") token: String
     ): Response<NgoProfile>
 
-    @PUT("api/ngo/profile")
+    @PUT("api/ngos/profile")
     suspend fun updateNgoProfile(
         @Header("Authorization") token: String,
         @Body request: NgoProfileRequest

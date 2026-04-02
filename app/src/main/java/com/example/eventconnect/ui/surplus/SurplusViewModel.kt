@@ -19,6 +19,9 @@ class SurplusViewModel : ViewModel() {
     private val _success = MutableStateFlow(false)
     val success: StateFlow<Boolean> = _success
 
+    private val _loading = MutableStateFlow(false)
+    val loading: StateFlow<Boolean> = _loading
+
     private val _acceptedNgo = MutableStateFlow<SurplusNGOResponse?>(null)
     val acceptedNgo: StateFlow<SurplusNGOResponse?> = _acceptedNgo
 
@@ -32,6 +35,7 @@ class SurplusViewModel : ViewModel() {
         longitude: Double
     ) {
         viewModelScope.launch {
+            _loading.value = true
             try {
                 if (FirebaseAuth.getInstance().currentUser == null) return@launch
                 val authHeader = getAuthHeader() ?: return@launch
@@ -55,6 +59,8 @@ class SurplusViewModel : ViewModel() {
 
             } catch (e: Exception) {
                 e.printStackTrace()
+            } finally {
+                _loading.value = false
             }
         }
     }
@@ -66,22 +72,16 @@ class SurplusViewModel : ViewModel() {
     }
 
     private fun startPolling() {
-
         viewModelScope.launch {
-
             while (_acceptedNgo.value == null) {
-
                 delay(5000)
-
                 requestId?.let { checkAcceptedNgo(it) }
             }
         }
     }
 
     private suspend fun checkAcceptedNgo(requestId: Int) {
-
         try {
-
             if (FirebaseAuth.getInstance().currentUser == null) return
             val authHeader = getAuthHeader() ?: return
 
@@ -91,7 +91,6 @@ class SurplusViewModel : ViewModel() {
                     requestId
                 )
             if (response.isSuccessful && response.body() != null) {
-
                 _acceptedNgo.value = response.body()
             }
 

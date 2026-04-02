@@ -7,23 +7,28 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.eventconnect.data.network.*
@@ -59,6 +64,17 @@ fun NgoProfileEditScreen(navController: NavController) {
     var loading by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
 
+    // Colors
+    val backgroundColor = Color(0xFFF8FAFC)
+    val cardColor = Color(0xFFFFFFFF)
+    val primaryPurple = Color(0xFF6C3EF4)
+    val secondaryPurple = Color(0xFF7C3AED)
+    val lightPurple = Color(0xFFEDE9FE)
+    val darkText = Color(0xFF111827)
+    val secondaryText = Color(0xFF6B7280)
+    val fieldBackground = Color(0xFFF1F5F9)
+    val purpleGradient = Brush.horizontalGradient(listOf(secondaryPurple, primaryPurple))
+
     // ---------------- IMAGE PICKER ----------------
     val imagePicker = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
@@ -69,9 +85,7 @@ fun NgoProfileEditScreen(navController: NavController) {
         rememberLauncherForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
-
             val granted = permissions.values.any { it }
-
             if (granted) {
                 fetchCurrentLocation(
                     context = context,
@@ -84,11 +98,7 @@ fun NgoProfileEditScreen(navController: NavController) {
                     }
                 )
             } else {
-                Toast.makeText(
-                    context,
-                    "Location permission denied",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(context, "Location permission denied", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -123,132 +133,188 @@ fun NgoProfileEditScreen(navController: NavController) {
     }
 
     Scaffold(
+        containerColor = backgroundColor,
         topBar = {
-            TopAppBar(title = { Text("Edit NGO Profile") })
+            TopAppBar(
+                title = {
+                    Text(
+                        "Edit NGO Profile",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = darkText
+                        )
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = darkText)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+            )
         }
     ) { padding ->
 
         if (loading) {
-            Box(
-                Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = primaryPurple)
             }
             return@Scaffold
         }
 
         Column(
             modifier = Modifier
+                .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             // ---------------- PROFILE IMAGE ----------------
-            Box(
-                modifier = Modifier
-                    .size(140.dp)
-                    .clickable { imagePicker.launch("image/*") },
-                contentAlignment = Alignment.BottomEnd
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(bottom = 24.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(140.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center
+                        .size(120.dp)
+                        .shadow(elevation = 8.dp, shape = CircleShape)
+                        .clickable { imagePicker.launch("image/*") },
+                    contentAlignment = Alignment.BottomEnd
                 ) {
-                    when {
-                        selectedImageUri != null ->
-                            Image(
-                                painter = rememberAsyncImagePainter(selectedImageUri),
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
+                    Box(
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape)
+                            .background(fieldBackground),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        when {
+                            selectedImageUri != null ->
+                                Image(
+                                    painter = rememberAsyncImagePainter(selectedImageUri),
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            imageUrl != null ->
+                                Image(
+                                    painter = rememberAsyncImagePainter(imageUrl),
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            else ->
+                                Icon(
+                                    Icons.Default.Business,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(50.dp),
+                                    tint = secondaryText
+                                )
+                        }
+                    }
 
-                        imageUrl != null ->
-                            Image(
-                                painter = rememberAsyncImagePainter(imageUrl),
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-
-                        else ->
-                            Icon(
-                                Icons.Default.Person,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(primaryPurple, CircleShape)
+                            .border(2.dp, Color.White, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.CameraAlt,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
                 }
-
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .background(
-                            MaterialTheme.colorScheme.primary,
-                            CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Default.CameraAlt,
-                        contentDescription = null,
-                        tint = Color.White
-                    )
-                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Upload NGO Logo",
+                    style = MaterialTheme.typography.labelMedium.copy(color = secondaryText)
+                )
             }
 
-            Spacer(Modifier.height(20.dp))
-
-            OutlinedTextField(name, { name = it }, label = { Text("NGO Name") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(establishedYear, { establishedYear = it }, label = { Text("Established Year") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(about, { about = it }, label = { Text("About") }, modifier = Modifier.fillMaxWidth(), maxLines = 4)
-            OutlinedTextField(email, { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(phone, { phone = it }, label = { Text("Phone") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(address, { address = it }, label = { Text("Address") }, modifier = Modifier.fillMaxWidth())
-
-            Spacer(Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    locationPermissionLauncher.launch(
-                        arrayOf(
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                        )
-                    )
-                }
+            // ---------------- FORM CONTAINER ----------------
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(elevation = 4.dp, shape = RoundedCornerShape(20.dp), ambientColor = Color.LightGray),
+                colors = CardDefaults.cardColors(containerColor = cardColor),
+                shape = RoundedCornerShape(20.dp)
             ) {
-                Text("Use Current Location")
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            // ✅ OpenStreetMap instead of GoogleMap
-            if (latitude != null && longitude != null) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(260.dp),
-                    shape = MaterialTheme.shapes.large,
-                    elevation = CardDefaults.cardElevation(6.dp)
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    OpenStreetMapView(
-                        context = context,
-                        latitude = latitude!!,
-                        longitude = longitude!!
-                    )
+                    ModernTextField(name, { name = it }, "NGO Name", Icons.Default.Business)
+                    ModernTextField(establishedYear, { establishedYear = it }, "Established Year", Icons.Default.CalendarToday)
+                    ModernTextField(about, { about = it }, "About NGO", Icons.Default.Description, singleLine = false, minLines = 3)
+                    ModernTextField(email, { email = it }, "Email", Icons.Default.Email)
+                    ModernTextField(phone, { phone = it }, "Phone", Icons.Default.Phone)
+                    ModernTextField(address, { address = it }, "Address", Icons.Default.LocationOn)
+
+                    Spacer(Modifier.height(8.dp))
+
+                    // ---------------- LOCATION SECTION ----------------
+                    Button(
+                        onClick = {
+                            locationPermissionLauncher.launch(
+                                arrayOf(
+                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION
+                                )
+                            )
+                        },
+                        modifier = Modifier.height(44.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = lightPurple),
+                        shape = RoundedCornerShape(22.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.MyLocation, contentDescription = null, tint = primaryPurple, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Use Current Location", color = primaryPurple, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
+                    }
+
+                    // ---------------- MAP SECTION ----------------
+                    if (latitude != null && longitude != null) {
+                        Column(modifier = Modifier.padding(top = 8.dp)) {
+                            Text(
+                                "Location Preview",
+                                style = MaterialTheme.typography.labelMedium.copy(color = secondaryText, fontWeight = FontWeight.Bold),
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .shadow(elevation = 2.dp, shape = RoundedCornerShape(16.dp)),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Box {
+                                    OpenStreetMapView(
+                                        context = context,
+                                        latitude = latitude!!,
+                                        longitude = longitude!!
+                                    )
+                                    Icon(
+                                        Icons.Default.Place,
+                                        contentDescription = null,
+                                        tint = Color.Red,
+                                        modifier = Modifier.size(32.dp).align(Alignment.Center)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(32.dp))
 
+            // ---------------- SAVE BUTTON ----------------
             Button(
                 enabled = !saving,
                 onClick = {
@@ -258,48 +324,29 @@ fun NgoProfileEditScreen(navController: NavController) {
                             scope.launch {
                                 try {
                                     var finalImageUrl = imageUrl
-
                                     if (selectedImageUri != null) {
-                                        val file =
-                                            uriToFile(context, selectedImageUri!!)
-                                        val part =
-                                            MultipartBody.Part.createFormData(
-                                                "file",
-                                                file.name,
-                                                file.asRequestBody(
-                                                    "image/*".toMediaType()
-                                                )
-                                            )
-
-                                        val imgRes =
-                                            RetrofitClient.apiService
-                                                .uploadNgoImage(
-                                                    "Bearer $token",
-                                                    part
-                                                )
-
+                                        val file = uriToFile(context, selectedImageUri!!)
+                                        val part = MultipartBody.Part.createFormData(
+                                            "file",
+                                            file.name,
+                                            file.asRequestBody("image/*".toMediaType())
+                                        )
+                                        val imgRes = RetrofitClient.apiService.uploadNgoImage("Bearer $token", part)
                                         if (imgRes.isSuccessful) {
-                                            finalImageUrl =
-                                                imgRes.body()?.image_url
+                                            finalImageUrl = imgRes.body()?.image_url
                                         }
                                     }
-
                                     RetrofitClient.apiService.updateNgoProfile(
                                         "Bearer $token",
                                         NgoProfileRequest(
-                                            name,
-                                            establishedYear,
-                                            about,
-                                            email,
-                                            phone,
-                                            address,
-                                            latitude,
-                                            longitude,
-                                            finalImageUrl
+                                            name, establishedYear, about, email, phone, address,
+                                            latitude, longitude, finalImageUrl
                                         )
                                     )
-
+                                    Toast.makeText(context, "Profile Updated Successfully", Toast.LENGTH_SHORT).show()
                                     navController.popBackStack()
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Error updating profile", Toast.LENGTH_SHORT).show()
                                 } finally {
                                     saving = false
                                 }
@@ -307,10 +354,73 @@ fun NgoProfileEditScreen(navController: NavController) {
                         },
                         onError = { saving = false }
                     )
-                }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .shadow(elevation = 8.dp, shape = RoundedCornerShape(20.dp)),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                contentPadding = PaddingValues(),
+                shape = RoundedCornerShape(20.dp)
             ) {
-                Text(if (saving) "Saving..." else "Save Profile")
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(purpleGradient),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (saving) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp), strokeWidth = 3.dp)
+                    } else {
+                        Text(
+                            "Save Profile",
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
+            Spacer(Modifier.height(20.dp))
         }
+    }
+}
+
+@Composable
+fun ModernTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    singleLine: Boolean = true,
+    minLines: Int = 1
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelLarge.copy(
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF111827)
+            )
+        )
+        TextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp)),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0xFFF1F5F9),
+                unfocusedContainerColor = Color(0xFFF1F5F9),
+                disabledContainerColor = Color(0xFFF1F5F9),
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                focusedTextColor = Color(0xFF111827),
+                unfocusedTextColor = Color(0xFF111827)
+            ),
+            leadingIcon = { Icon(icon, contentDescription = null, tint = Color(0xFF6C3EF4)) },
+            singleLine = singleLine,
+            minLines = minLines
+        )
     }
 }
