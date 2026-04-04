@@ -22,8 +22,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
@@ -243,20 +245,13 @@ fun CatererMenuScreen(
     }
 
     if (bookingSuccess) {
-        AlertDialog(
-            onDismissRequest = {},
-            confirmButton = {
-                Button(onClick = {
-                    viewModel.resetBookingState()
-                    navController.popBackStack()
-                }, colors = ButtonDefaults.buttonColors(containerColor = primaryPurple)) {
-                    Text("OK")
-                }
+        BookingSuccessDialog(
+            onDismiss = {
+                viewModel.resetBookingState()
+                navController.popBackStack()
             },
-            title = { Text("Booking Sent", fontWeight = FontWeight.Bold) },
-            text = { Text("Your booking request has been sent successfully.") },
-            containerColor = Color.White,
-            shape = RoundedCornerShape(20.dp)
+            primaryPurple = primaryPurple,
+            gradientStart = secondaryPurple
         )
     }
 
@@ -288,6 +283,101 @@ fun CatererMenuScreen(
             containerColor = Color.White,
             shape = RoundedCornerShape(20.dp)
         )
+    }
+}
+
+@Composable
+fun BookingSuccessDialog(
+    onDismiss: () -> Unit,
+    primaryPurple: Color,
+    gradientStart: Color
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .shadow(elevation = 24.dp, shape = RoundedCornerShape(20.dp)),
+            shape = RoundedCornerShape(20.dp),
+            color = Color.White
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Success Icon
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(Color(0xFFDCFCE7), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Success",
+                        tint = Color(0xFF22C55E),
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Title
+                Text(
+                    text = "Booking Sent",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF111827),
+                        fontSize = 20.sp
+                    ),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Description
+                Text(
+                    text = "Your booking request has been sent successfully.",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = Color(0xFF374151),
+                        fontSize = 16.sp
+                    ),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // OK Button
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
+                        .height(48.dp)
+                        .shadow(elevation = 8.dp, shape = RoundedCornerShape(24.dp), spotColor = primaryPurple.copy(alpha = 0.5f)),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    contentPadding = PaddingValues()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.horizontalGradient(listOf(gradientStart, primaryPurple))
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "OK",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

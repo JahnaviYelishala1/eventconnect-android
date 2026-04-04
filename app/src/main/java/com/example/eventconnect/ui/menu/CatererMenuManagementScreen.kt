@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,8 +32,10 @@ import com.example.eventconnect.data.network.MenuResponse
 fun CatererMenuManagementScreen(
     viewModel: CatererMenuManagementViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val menu by viewModel.menu.collectAsState()
     val loading by viewModel.loading.collectAsState()
+    val addMenuSuccess by viewModel.addMenuSuccess.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
 
     val backgroundColor = Brush.verticalGradient(
@@ -44,6 +47,13 @@ fun CatererMenuManagementScreen(
 
     LaunchedEffect(Unit) {
         viewModel.loadMenu()
+    }
+
+    LaunchedEffect(addMenuSuccess) {
+        if (addMenuSuccess) {
+            showDialog = false
+            viewModel.resetAddMenuSuccess()
+        }
     }
 
     Scaffold(
@@ -115,10 +125,10 @@ fun CatererMenuManagementScreen(
 
     if (showDialog) {
         AddMenuDialog(
-            onDismiss = { showDialog = false },
+            loading = loading,
+            onDismiss = { if (!loading) showDialog = false },
             onSave = { request, imageUri ->
-                viewModel.addMenu(request, imageUri)
-                showDialog = false
+                viewModel.addMenu(context, request, imageUri)
             }
         )
     }

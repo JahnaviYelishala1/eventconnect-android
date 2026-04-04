@@ -31,7 +31,7 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Response<Map<String, String>>
 
-    // 🔹 CREATE EVENT + SAVE TO DB (THIS WAS MISSING)
+
     @POST("api/events")
     suspend fun createEvent(
         @Header("Authorization") token: String,
@@ -257,7 +257,7 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Response<List<MenuResponse>>
 
-    @POST("api/menus/")
+    @POST("api/menus")
     suspend fun createMenu(
         @Header("Authorization") token: String,
         @Body request: MenuCreateRequest

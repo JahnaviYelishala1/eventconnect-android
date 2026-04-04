@@ -108,7 +108,7 @@ EventConnect is a platform for event hosts to find caterers, NGOs, and manage ev
 - `GET /api/payments/{bookingId}` — Get payment details
 - `GET /api/payments/caterer/history` — Get caterer payment history
 - `GET /api/bookings/caterer/revenue` — Get caterer revenue stats
-- `POST /api/payments/refund/{bookingId}` — Process refund
+- `POST /api/payments/refund/{bookingId}` Process refund
 - `GET /api/payments/invoice/{booking_id}` — Download payment invoice
 
 ### NGO APIs

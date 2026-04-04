@@ -66,6 +66,54 @@ class MenuViewModel : ViewModel() {
         }
     }
 
+    fun loadMyMenu() {
+        viewModelScope.launch {
+            try {
+                _loading.value = true
+                val authHeader = getAuthHeader() ?: return@launch
+                val response = RetrofitClient.apiService.getMyMenu(authHeader)
+
+                if (response.isSuccessful) {
+                    _menu.value = response.body() ?: emptyList()
+                } else {
+                    _error.value = "Failed to load my menu: ${response.code()}"
+                }
+            } catch (e: Exception) {
+                _error.value = e.localizedMessage
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
+
+    /* ---------------- CREATE MENU ---------------- */
+
+    fun createMenu(request: MenuCreateRequest) {
+        viewModelScope.launch {
+            try {
+                _loading.value = true
+                _error.value = null
+
+                val authHeader = getAuthHeader()
+                    ?: throw Exception("Token missing")
+
+                val response = RetrofitClient.apiService
+                    .createMenu(authHeader, request)
+
+                if (response.isSuccessful) {
+                    loadMyMenu()
+                } else {
+                    _error.value = "Failed: ${response.code()}"
+                }
+
+            } catch (e: Exception) {
+                _error.value = e.localizedMessage
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
+
     /* ---------------- SEND BOOKING ---------------- */
 
     fun sendBookingRequest(request: BookingCreateRequest) {

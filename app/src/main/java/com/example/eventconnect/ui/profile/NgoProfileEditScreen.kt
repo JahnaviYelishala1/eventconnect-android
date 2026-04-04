@@ -2,6 +2,7 @@ package com.example.eventconnect.ui.profile
 
 import android.Manifest
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -63,6 +65,7 @@ fun NgoProfileEditScreen(navController: NavController) {
 
     var loading by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
+    var profileExists by remember { mutableStateOf(false) }
 
     // Colors
     val backgroundColor = Color(0xFFF8FAFC)
@@ -108,10 +111,12 @@ fun NgoProfileEditScreen(navController: NavController) {
             onTokenReceived = { token ->
                 scope.launch {
                     try {
-                        val res = RetrofitClient.apiService
-                            .getNgoProfile("Bearer $token")
+                        val authHeader = "Bearer $token"
+                        val res = RetrofitClient.apiService.getNgoProfile(authHeader)
+                        Log.d("NgoProfileEditScreen", "GET /api/ngos/profile code=${res.code()} body=${res.body()}")
 
                         if (res.isSuccessful && res.body() != null) {
+                            profileExists = true
                             val p = res.body()!!
                             name = p.name
                             establishedYear = p.establishedYear ?: ""
@@ -122,7 +127,15 @@ fun NgoProfileEditScreen(navController: NavController) {
                             latitude = p.latitude
                             longitude = p.longitude
                             imageUrl = p.imageUrl
+                        } else if (res.code() == 404) {
+                            profileExists = false
+                            Log.d("NgoProfileEditScreen", "NGO profile not found (404), opening create profile mode")
+                        } else {
+                            val errorBody = res.errorBody()?.string().orEmpty()
+                            Log.e("NgoProfileEditScreen", "Failed to load NGO profile: code=${res.code()} error=$errorBody")
                         }
+                    } catch (e: Exception) {
+                        Log.e("NgoProfileEditScreen", "Exception while loading NGO profile", e)
                     } finally {
                         loading = false
                     }
@@ -147,7 +160,7 @@ fun NgoProfileEditScreen(navController: NavController) {
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = darkText)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = darkText)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
@@ -323,6 +336,7 @@ fun NgoProfileEditScreen(navController: NavController) {
                         onTokenReceived = { token ->
                             scope.launch {
                                 try {
+                                    val authHeader = "Bearer $token"
                                     var finalImageUrl = imageUrl
                                     if (selectedImageUri != null) {
                                         val file = uriToFile(context, selectedImageUri!!)
@@ -331,21 +345,42 @@ fun NgoProfileEditScreen(navController: NavController) {
                                             file.name,
                                             file.asRequestBody("image/*".toMediaType())
                                         )
-                                        val imgRes = RetrofitClient.apiService.uploadNgoImage("Bearer $token", part)
+                                        val imgRes = RetrofitClient.apiService.uploadNgoImage(authHeader, part)
+                                        Log.d("NgoProfileEditScreen", "POST /api/ngos/upload-image code=${imgRes.code()} body=${imgRes.body()}")
                                         if (imgRes.isSuccessful) {
                                             finalImageUrl = imgRes.body()?.image_url
+                                        } else {
+                                            val uploadError = imgRes.errorBody()?.string().orEmpty()
+                                            Log.e("NgoProfileEditScreen", "Failed to upload NGO image: code=${imgRes.code()} error=$uploadError")
                                         }
                                     }
-                                    RetrofitClient.apiService.updateNgoProfile(
-                                        "Bearer $token",
-                                        NgoProfileRequest(
-                                            name, establishedYear, about, email, phone, address,
-                                            latitude, longitude, finalImageUrl
-                                        )
+
+                                    val request = NgoProfileRequest(
+                                        name, establishedYear, about, email, phone, address,
+                                        latitude, longitude, finalImageUrl
                                     )
-                                    Toast.makeText(context, "Profile Updated Successfully", Toast.LENGTH_SHORT).show()
-                                    navController.popBackStack()
+
+                                    val saveRes = if (profileExists) {
+                                        RetrofitClient.apiService.updateNgoProfile(authHeader, request)
+                                    } else {
+                                        RetrofitClient.apiService.saveNgoProfile(authHeader, request)
+                                    }
+
+                                    val method = if (profileExists) "PUT" else "POST"
+                                    Log.d("NgoProfileEditScreen", "$method /api/ngos/profile code=${saveRes.code()} body=${saveRes.body()}")
+
+                                    if (saveRes.isSuccessful) {
+                                        profileExists = true
+                                        val successMessage = if (method == "PUT") "Profile Updated Successfully" else "Profile Created Successfully"
+                                        Toast.makeText(context, successMessage, Toast.LENGTH_SHORT).show()
+                                        navController.popBackStack()
+                                    } else {
+                                        val errorBody = saveRes.errorBody()?.string().orEmpty()
+                                        Log.e("NgoProfileEditScreen", "Failed to save NGO profile: code=${saveRes.code()} error=$errorBody")
+                                        Toast.makeText(context, "Error saving profile", Toast.LENGTH_SHORT).show()
+                                    }
                                 } catch (e: Exception) {
+                                    Log.e("NgoProfileEditScreen", "Exception while saving NGO profile", e)
                                     Toast.makeText(context, "Error updating profile", Toast.LENGTH_SHORT).show()
                                 } finally {
                                     saving = false

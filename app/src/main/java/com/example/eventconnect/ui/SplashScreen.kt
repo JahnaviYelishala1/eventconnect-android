@@ -37,7 +37,7 @@ fun SplashScreen() {
             )
             Spacer(modifier = Modifier.height(32.dp))
             Text(
-                text = "EevntConnect",
+                text = "EventConnect",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
